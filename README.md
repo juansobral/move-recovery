@@ -28,7 +28,8 @@ Sin frameworks ni bundler: se despliega tal cual está.
 ├─ api/
 │  ├─ config.js        # GET  servicios y horarios disponibles
 │  ├─ availability.js  # GET  slots libres/ocupados de una fecha
-│  └─ bookings.js      # POST crear · GET listar (admin) · DELETE cancelar (admin)
+│  ├─ bookings.js      # POST crear · GET listar (admin) · DELETE cancelar (admin)
+│  └─ diag.js          # GET  diagnóstico de configuración (admin)
 ├─ lib/
 │  ├─ db.js            # conexión Neon + validaciones + constantes (SLOTS, SERVICIOS)
 │  └─ mail.js          # cliente Brevo + plantillas de email
@@ -66,6 +67,10 @@ npm install
 cp .env.example .env   # completá los valores
 vercel dev
 ```
+
+## Diagnóstico
+
+Si algo no funciona (típicamente los emails), `/api/diag?key=TU_ADMIN_KEY` reporta el estado de las variables de entorno, la conexión a Neon y la cuenta de Brevo — incluido si el remitente está verificado. Agregando `&test=tu@email.com` manda un mail de prueba. Nunca expone credenciales. Ver la sección de troubleshooting en [DEPLOY.md](DEPLOY.md).
 
 ## Personalizar
 

@@ -152,6 +152,41 @@ La página está marcada como `noindex` y bloqueada en `robots.txt`, así que no
 
 ---
 
+## No me llegan los emails
+
+Abrí esta URL en el navegador:
+
+```
+https://TU-URL/api/diag?key=TU_ADMIN_KEY
+```
+
+Te dice exactamente qué está bien y qué falta: variables configuradas, conexión a Neon, estado de la cuenta de Brevo, si el remitente está verificado y cuántos emails te quedan. Mirá la lista `problemas` y la de `siguientes_pasos`. Nunca muestra el valor de una credencial, solo los primeros y últimos caracteres.
+
+Para mandarte un mail de prueba sin tener que hacer una reserva:
+
+```
+https://TU-URL/api/diag?key=TU_ADMIN_KEY&test=tu@email.com
+```
+
+Llega el mail de confirmación completo, con el protocolo, tal como lo recibe un cliente.
+
+### Las causas más comunes
+
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| `BREVO_API_KEY: FALTA` | No se configuró la variable | Paso 3 y 4 de esta guía |
+| Reserva se guarda pero no llega nada | Igual que arriba: el envío se saltea a propósito para no romper la reserva | Paso 3 y 4 |
+| `remitente SIN VERIFICAR` | Está cargado en Brevo pero no confirmaste el mail | Buscá el mail de Brevo en `movesc.performance@gmail.com` (revisá spam) y hacé clic en el link |
+| `API key rechazada (401)` | Copiaste la **SMTP key** en lugar de la **API key** | Son distintas. Settings → SMTP & API → pestaña **API keys** |
+| Configuré todo y sigue sin andar | Vercel toma variables nuevas solo en el siguiente deploy | `vercel --prod` o Deployments → Redeploy |
+| Llega al equipo pero no al cliente | El mail cayó en spam del cliente | Normal al arrancar con Gmail como remitente. Mejora con dominio propio y DKIM |
+
+### Ver los logs
+
+En Vercel → tu proyecto → **Logs**, filtrá por `[mail]`. Cada envío fallido deja el error textual que devolvió Brevo. En Brevo, **Transactional → Logs** muestra todos los envíos con su estado (entregado, rebotado, spam).
+
+---
+
 ## Horarios
 
 Los bloques de 1 h (mañana 7–11, tarde 15–20) están en `lib/db.js`, constante `SLOTS`. Editá esa lista y volvé a desplegar para cambiarlos.
