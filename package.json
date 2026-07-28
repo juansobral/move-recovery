@@ -1,0 +1,9 @@
+{
+  "name": "move-recovery-vercel",
+  "version": "1.0.0",
+  "description": "MOVE Recovery Room - versión para Vercel (serverless) + Neon Postgres",
+  "type": "module",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.5"
+  }
+}

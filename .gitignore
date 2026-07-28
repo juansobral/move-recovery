@@ -1,0 +1,29 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno — NUNCA commitear (usar .env.example como plantilla)
+.env
+.env.*
+!.env.example
+
+# Vercel (vincula esta carpeta con el proyecto, es local)
+.vercel
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Sistema operativo
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*~
