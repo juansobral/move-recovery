@@ -227,7 +227,11 @@ function closeModal() {
 
 $('modalCancel').addEventListener('click', closeModal);
 $('modal').addEventListener('click', (e) => { if (e.target === $('modal')) closeModal(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  closeModal();
+  $('diagModal').classList.add('hidden');
+});
 
 $('modalConfirm').addEventListener('click', async () => {
   if (!pending) return;
@@ -247,6 +251,90 @@ $('modalConfirm').addEventListener('click', async () => {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Cancelar reserva';
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* Diagnóstico                                                        */
+/* ------------------------------------------------------------------ */
+
+$('diagBtn').addEventListener('click', () => {
+  $('diagModal').classList.remove('hidden');
+  $('testMsg').textContent = '';
+  loadDiag();
+});
+$('diagClose').addEventListener('click', () => $('diagModal').classList.add('hidden'));
+$('diagModal').addEventListener('click', (e) => { if (e.target === $('diagModal')) $('diagModal').classList.add('hidden'); });
+
+const ESTADO_OK = /^(OK|configurada|.*verificado$|.*disponibles.*)/i;
+
+function bloque(titulo, obj) {
+  const filas = Object.entries(obj || {})
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => {
+      const txt = String(v);
+      const malo = /FALTA|ERROR|NO está|SIN VERIFICAR|rechazada|FALLÓ|no se pudo/i.test(txt);
+      const bueno = ESTADO_OK.test(txt);
+      return `<tr><td class="diag-k">${esc(k.replace(/_/g, ' '))}</td><td class="diag-v ${malo ? 'bad' : bueno ? 'good' : ''}">${esc(txt)}</td></tr>`;
+    })
+    .join('');
+  if (!filas) return '';
+  return `<h4 class="diag-h">${esc(titulo)}</h4><table class="diag-table">${filas}</table>`;
+}
+
+async function loadDiag() {
+  const box = $('diagBody');
+  box.innerHTML = '<p class="diag-loading">Consultando…</p>';
+  try {
+    const res = await fetch(`/api/diag?key=${encodeURIComponent(KEY)}`);
+    if (!res.ok) throw new Error(`El servidor respondió ${res.status}. ¿Está desplegada la última versión?`);
+    const d = await res.json();
+
+    const problemas = (d.problemas || []).length
+      ? `<div class="diag-alert bad"><strong>${d.problemas.length} problema(s)</strong><ul>${d.problemas.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></div>`
+      : `<div class="diag-alert good"><strong>${esc(d.resumen || 'Todo en orden.')}</strong></div>`;
+
+    const pasos = (d.siguientes_pasos || []).length
+      ? `<div class="diag-alert"><strong>Siguientes pasos</strong><ul>${d.siguientes_pasos.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></div>`
+      : '';
+
+    box.innerHTML =
+      problemas +
+      pasos +
+      bloque('Emails (Brevo)', d.emails) +
+      bloque('Base de datos', d.base_de_datos) +
+      bloque('Variables de entorno', d.variables) +
+      bloque('Deploy', d.deploy);
+  } catch (err) {
+    box.innerHTML = `<div class="diag-alert bad"><strong>No se pudo obtener el diagnóstico</strong><p>${esc(err.message)}</p></div>`;
+  }
+}
+
+$('testBtn').addEventListener('click', async () => {
+  const email = $('testEmail').value.trim();
+  const msg = $('testMsg');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.textContent = 'Poné un email válido.';
+    msg.className = 'form-msg err';
+    return;
+  }
+  const btn = $('testBtn');
+  btn.disabled = true;
+  msg.textContent = 'Enviando…';
+  msg.className = 'form-msg';
+  try {
+    const res = await fetch(`/api/diag?key=${encodeURIComponent(KEY)}&test=${encodeURIComponent(email)}`);
+    const d = await res.json();
+    const r = String(d.emails?.prueba || '');
+    const ok = r.includes('enviado');
+    msg.textContent = ok ? `✓ ${r}` : `✗ ${r}${d.emails?.prueba_detalle ? ' · ' + d.emails.prueba_detalle : ''}`;
+    msg.className = 'form-msg ' + (ok ? 'ok' : 'err');
+    loadDiag();
+  } catch {
+    msg.textContent = 'Error de conexión.';
+    msg.className = 'form-msg err';
+  } finally {
+    btn.disabled = false;
   }
 });
 
