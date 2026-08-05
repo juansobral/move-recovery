@@ -57,4 +57,14 @@ export class UsersService {
     user.phone = phone;
     return this.usersRepo.save(user);
   }
+
+  findAll(): Promise<User[]> {
+    return this.usersRepo.find({ order: { createdAt: 'DESC' } });
+  }
+
+  async setSocio(id: string, isSocio: boolean): Promise<User> {
+    const user = await this.usersRepo.findOneOrFail({ where: { id } });
+    user.isSocio = isSocio;
+    return this.usersRepo.save(user);
+  }
 }

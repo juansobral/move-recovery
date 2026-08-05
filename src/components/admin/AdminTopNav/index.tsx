@@ -23,6 +23,12 @@ export const AdminTopNav = ({ onReload, isReloading }: AdminTopNavProps): JSX.El
         <span className="rounded-md border border-border px-2 py-0.5 text-xs uppercase tracking-wide text-muted-foreground">Admin</span>
       </div>
       <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/admin">Reservas</Link>
+        </Button>
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/admin/usuarios">Usuarios</Link>
+        </Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => setDiagOpen(true)}>
           Diagnóstico
         </Button>

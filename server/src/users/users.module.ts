@@ -3,8 +3,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
 import { Booking } from '../bookings/entities/booking.entity';
 import { User } from './entities/user.entity';
+import { AdminUsersController } from './admin-users.controller';
 import { googleOAuthClientProvider } from './google-oauth-client.provider';
 import { GoogleTokenVerifierService } from './google-token-verifier.service';
 import { UserJwtStrategy } from './strategies/user-jwt.strategy';
@@ -15,6 +17,9 @@ import { UsersService } from './users.service';
   imports: [
     TypeOrmModule.forFeature([User, Booking]),
     PassportModule,
+    // El orden acá importa: JwtModule (USER_JWT_SECRET) tiene que ir antes que AuthModule
+    // (que exporta su propio JwtModule con JWT_SECRET) — si se invierte, UsersService
+    // empieza a firmar con el secreto de admin.
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -23,8 +28,9 @@ import { UsersService } from './users.service';
         signOptions: { expiresIn: '30d' },
       }),
     }),
+    AuthModule,
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, AdminUsersController],
   providers: [UsersService, GoogleTokenVerifierService, googleOAuthClientProvider, UserJwtStrategy],
   exports: [JwtModule, PassportModule, UsersService],
 })
