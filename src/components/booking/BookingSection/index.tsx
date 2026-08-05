@@ -61,7 +61,7 @@ export const BookingSection = (): JSX.Element => {
           <PaymentChoice
             resetSessionPrice={600}
             hasActivePlan={hasActivePlan}
-            onPayOneOff={() => submitBooking({ notes: '' })}
+            onPayOneOff={(notes) => submitBooking({ notes })}
             onSubscribe={subscribeAndBook}
           />
         )}

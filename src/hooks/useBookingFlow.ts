@@ -50,11 +50,11 @@ export function useBookingFlow() {
     return result as CreateBookingResponse;
   };
 
-  const subscribeAndBook = async (plan: 'standard' | 'premium'): Promise<void> => {
+  const subscribeAndBook = async (plan: 'standard' | 'premium', notes = ''): Promise<void> => {
     if (!selectedTime) throw new Error('Elegí un horario.');
     const { initPoint } = await createSubscriptionCheckout({
       plan,
-      intendedBooking: { date, time: selectedTime, service },
+      intendedBooking: { date, time: selectedTime, service, notes },
     }).unwrap();
     window.location.assign(initPoint);
   };
