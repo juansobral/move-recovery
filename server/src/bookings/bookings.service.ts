@@ -40,6 +40,8 @@ export class BookingsService {
     if (dto.date < todayStr()) throw new BadRequestException('No se puede reservar en una fecha pasada.');
 
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } });
+    if (user.phone === null) throw new BadRequestException('Completá tu perfil antes de reservar.');
+
     const service = (SERVICIOS as readonly string[]).includes(dto.service ?? '') ? (dto.service as string) : 'Recovery Room';
 
     let booking: Booking;

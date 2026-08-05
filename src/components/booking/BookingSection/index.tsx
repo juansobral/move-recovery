@@ -24,7 +24,7 @@ export const BookingSection = (): JSX.Element => {
   } = useBookingFlow();
 
   const isAuthenticated = useAppSelector(selectIsCustomerAuthenticated);
-  const { handleCredential } = useGoogleAuth();
+  const { handleCredential, error: googleAuthError } = useGoogleAuth();
 
   if (!isAuthenticated) {
     return (
@@ -34,6 +34,7 @@ export const BookingSection = (): JSX.Element => {
         <div className="flex justify-center">
           <GoogleSignInButton onCredential={handleCredential} />
         </div>
+        {googleAuthError && <p className="mt-3.5 text-sm text-destructive">{googleAuthError}</p>}
       </section>
     );
   }

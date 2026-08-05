@@ -19,7 +19,7 @@ export class UsersService {
 
   async loginWithGoogle(profile: GoogleProfile): Promise<GoogleLoginResult> {
     const user = await this.upsertFromGoogleProfile(profile);
-    const accessToken = await this.jwt.signAsync({ sub: user.id, email: user.email });
+    const accessToken = await this.jwt.signAsync({ sub: user.id, email: user.email, typ: 'customer' });
     return { accessToken, profileComplete: user.phone !== null };
   }
 

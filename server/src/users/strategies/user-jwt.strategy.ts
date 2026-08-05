@@ -18,6 +18,7 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
 
   validate(payload: UserJwtPayload): AuthenticatedCustomer {
     if (!payload?.sub || !payload?.email) throw new UnauthorizedException('No autorizado.');
+    if (payload.typ !== 'customer') throw new UnauthorizedException('No autorizado.');
     return { id: payload.sub, email: payload.email };
   }
 }

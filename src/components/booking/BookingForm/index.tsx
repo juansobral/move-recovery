@@ -44,7 +44,7 @@ export const BookingForm = ({ date, selectedTime, isSubmitting, onSubmit }: Book
 
   return (
     <form onSubmit={submit} className="rounded-lg border border-border bg-card p-7">
-      <h3 className="mb-[18px] text-lg uppercase tracking-wide">Tus datos</h3>
+      <h3 className="mb-[18px] text-lg uppercase tracking-wide">Confirmá tu reserva</h3>
 
       <div className="mb-4">
         <Label htmlFor="booking-notes">Notas (opcional)</Label>

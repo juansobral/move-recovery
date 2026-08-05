@@ -82,6 +82,11 @@ En Vercel, entrá a tu proyecto → **Settings → Environment Variables** y agr
 | `MAIL_FROM` | `movesc.performance@gmail.com` | remitente (tiene que ser el verificado en Brevo) |
 | `MAIL_ADMIN` | `movesc.performance@gmail.com` | a dónde llega el aviso de nueva reserva |
 | `SITE_URL` | la URL pública, ej. `https://move-recovery.vercel.app` (sin `/` al final) | links dentro de los emails |
+| `GOOGLE_CLIENT_ID` | el Client ID de un "OAuth 2.0 Client ID" tipo Web application en Google Cloud Console | verificar el idToken de Google en el login de clientes |
+| `USER_JWT_SECRET` | una clave inventada por vos, larga y aleatoria (separada de `JWT_SECRET` a propósito — los dos tipos de token nunca deben ser intercambiables) | firmar las sesiones de clientes (`/mi-cuenta`, reservas) |
+| `VITE_GOOGLE_CLIENT_ID` | el mismo valor que `GOOGLE_CLIENT_ID` (los Client ID de Google no son secretos, están pensados para ir en código de cliente) | mostrar el botón de Google Sign-In en el front |
+
+> `VITE_GOOGLE_CLIENT_ID` se incorpora al bundle del front **en tiempo de build** (Vite la reemplaza al compilar) — a diferencia de las variables server-only de arriba, que se leen en runtime, esta tiene que estar configurada en Vercel *antes* de correr `vercel --prod` / `npm run build`. Si la cambiás después, hace falta un nuevo build para que tome efecto.
 
 Marcá las tres casillas (Production, Preview, Development). Guardá y volvé a desplegar para que tome las variables:
 
@@ -103,7 +108,7 @@ npm run migration:run --workspace=server
 SEED_ADMIN_EMAIL=vos@move.uy SEED_ADMIN_PASSWORD="una-clave-larga" npm run seed:admin --workspace=server
 ```
 
-Esto crea las tablas `bookings` y `admin_users`, y da de alta la primera (y por ahora única) cuenta para entrar a `/admin`. `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` no hace falta dejarlas configuradas en Vercel — son solo para correr el script una vez.
+Esto corre las 4 migraciones (`CreateAdminUsers`, `CreateBookings`, `CreateUsers`, `AddUserIdToBookings`), que crean las tablas `admin_users`, `bookings` y `users`, y da de alta la primera (y por ahora única) cuenta para entrar a `/admin`. `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` no hace falta dejarlas configuradas en Vercel — son solo para correr el script una vez.
 
 Para cambiar la clave más adelante, corré `seed:admin` de nuevo con el mismo email: actualiza el hash en vez de crear una cuenta nueva.
 

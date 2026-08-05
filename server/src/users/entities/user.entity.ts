@@ -5,7 +5,7 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'text', unique: true })
+  @Column({ name: 'google_id', type: 'text', unique: true })
   googleId: string;
 
   @Column({ type: 'text', unique: true })

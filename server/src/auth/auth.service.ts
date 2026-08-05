@@ -20,7 +20,7 @@ export class AuthService {
     // Un único error genérico: nunca distinguir "no existe" de "clave incorrecta".
     if (!admin || !ok) throw new UnauthorizedException('Credenciales inválidas.');
 
-    const accessToken = await this.jwt.signAsync({ sub: admin.id, email: admin.email });
+    const accessToken = await this.jwt.signAsync({ sub: admin.id, email: admin.email, typ: 'admin' });
     return { accessToken };
   }
 }

@@ -18,6 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   validate(payload: JwtPayload): AuthenticatedAdmin {
     if (!payload?.sub || !payload?.email) throw new UnauthorizedException('No autorizado.');
+    if (payload.typ !== 'admin') throw new UnauthorizedException('No autorizado.');
     return { id: payload.sub, email: payload.email };
   }
 }
