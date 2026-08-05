@@ -24,12 +24,32 @@ export class SubscriptionsService {
     });
   }
 
+  // UPDATE condicional atómico: el "¿queda crédito?" y el descuento pasan en la
+  // misma sentencia, así dos reservas simultáneas del mismo cliente no pueden
+  // consumir el mismo crédito (el read-modify-write anterior sí lo permitía).
   async tryConsumeCredit(userId: string): Promise<boolean> {
     const subscription = await this.findCurrent(userId);
-    if (!subscription || subscription.sessionCreditsRemaining <= 0) return false;
-    subscription.sessionCreditsRemaining -= 1;
-    await this.subscriptionsRepo.save(subscription);
-    return true;
+    if (!subscription) return false;
+    const result = await this.subscriptionsRepo
+      .createQueryBuilder()
+      .update(Subscription)
+      .set({ sessionCreditsRemaining: () => 'session_credits_remaining - 1' })
+      .where('id = :id AND session_credits_remaining > 0', { id: subscription.id })
+      .execute();
+    return (result.affected ?? 0) > 0;
+  }
+
+  // Compensación de tryConsumeCredit: si la reserva que iba a pagar el crédito
+  // falla, lo devolvemos (nunca por encima del total del plan).
+  async restoreCredit(userId: string): Promise<void> {
+    const subscription = await this.findCurrent(userId);
+    if (!subscription) return;
+    await this.subscriptionsRepo
+      .createQueryBuilder()
+      .update(Subscription)
+      .set({ sessionCreditsRemaining: () => 'LEAST(session_credits_remaining + 1, session_credits_total)' })
+      .where('id = :id', { id: subscription.id })
+      .execute();
   }
 
   async createFromPreapproval(params: CreateFromPreapprovalParams): Promise<Subscription> {
