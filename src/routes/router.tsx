@@ -70,6 +70,13 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: '/pago-pendiente',
+    lazy: async () => {
+      const { CheckoutPendingPage } = await import('../pages/CheckoutPendingPage');
+      return { Component: CheckoutPendingPage };
+    },
+  },
+  {
     path: '*',
     lazy: async () => {
       const { NotFoundPage } = await import('../pages/NotFoundPage');
