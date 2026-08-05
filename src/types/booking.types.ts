@@ -29,9 +29,6 @@ export interface CreateBookingRequest {
   date: string;
   time: string;
   service: string;
-  name: string;
-  email: string;
-  phone: string;
   notes?: string;
 }
 

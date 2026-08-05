@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGetAvailabilityQuery } from '../features/api/availabilityApi';
 import { useGetConfigQuery } from '../features/api/configApi';
-import { useCreateBookingMutation } from '../features/api/bookingsApi';
+import { useCreateBookingMutation } from '../features/api/userApi';
 import { todayStr } from '../lib/dateUtils';
 import type { ClientFieldsValues } from '../schemas/booking.schema';
 import type { CreateBookingResponse } from '../types/booking.types';
