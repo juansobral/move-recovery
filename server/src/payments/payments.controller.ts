@@ -42,7 +42,7 @@ export class PaymentsController {
 
     const user = await this.usersService.findById(customer.id);
     const amount = user?.isSocio ? RESET_SESSION_PRICE.priceSocioUyu : RESET_SESSION_PRICE.priceUyu;
-    const siteUrl = process.env.SITE_URL ?? 'http://localhost:5173';
+    const siteUrl = this.config.get<string>('SITE_URL') ?? 'http://localhost:5173';
 
     const reference = await this.checkoutReference.sign({
       kind: 'oneoff',
@@ -76,7 +76,7 @@ export class PaymentsController {
     const user = await this.usersService.findById(customer.id);
     const plan = PLANS[dto.plan];
     const amount = user?.isSocio ? plan.priceSocioUyu : plan.priceUyu;
-    const siteUrl = process.env.SITE_URL ?? 'http://localhost:5173';
+    const siteUrl = this.config.get<string>('SITE_URL') ?? 'http://localhost:5173';
 
     const reference = await this.checkoutReference.sign({
       kind: 'subscription',
@@ -101,6 +101,7 @@ export class PaymentsController {
   @Get('bookings/checkout-status')
   @UseGuards(UserJwtAuthGuard)
   async checkoutStatus(@Query('ref') ref: string, @CurrentUser() customer: AuthenticatedCustomer) {
+    if (!ref) return { status: 'invalid' };
     const intent = await this.checkoutReference.verify(ref);
     if (!intent || intent.userId !== customer.id) {
       return { status: 'invalid' };
