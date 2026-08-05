@@ -17,6 +17,9 @@ import { UsersService } from './users.service';
   imports: [
     TypeOrmModule.forFeature([User, Booking]),
     PassportModule,
+    // El orden acá importa: JwtModule (USER_JWT_SECRET) tiene que ir antes que AuthModule
+    // (que exporta su propio JwtModule con JWT_SECRET) — si se invierte, UsersService
+    // empieza a firmar con el secreto de admin.
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

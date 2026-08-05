@@ -24,6 +24,9 @@ export const AdminTopNav = ({ onReload, isReloading }: AdminTopNavProps): JSX.El
       </div>
       <div className="flex items-center gap-2">
         <Button asChild variant="ghost" size="sm">
+          <Link to="/admin">Reservas</Link>
+        </Button>
+        <Button asChild variant="ghost" size="sm">
           <Link to="/admin/usuarios">Usuarios</Link>
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => setDiagOpen(true)}>
