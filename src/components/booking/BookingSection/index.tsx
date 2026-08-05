@@ -1,4 +1,8 @@
+import { selectIsCustomerAuthenticated } from '../../../features/userAuth/userAuthSlice';
 import { useBookingFlow } from '../../../hooks/useBookingFlow';
+import { useGoogleAuth } from '../../../hooks/useGoogleAuth';
+import { useAppSelector } from '../../../store/hooks';
+import { GoogleSignInButton } from '../../auth/GoogleSignInButton';
 import { SectionHeading } from '../../landing/SectionHeading';
 import { BookingForm } from '../BookingForm';
 import { DateServiceSelector } from '../DateServiceSelector';
@@ -18,6 +22,21 @@ export const BookingSection = (): JSX.Element => {
     submitBooking,
     isSubmitting,
   } = useBookingFlow();
+
+  const isAuthenticated = useAppSelector(selectIsCustomerAuthenticated);
+  const { handleCredential } = useGoogleAuth();
+
+  if (!isAuthenticated) {
+    return (
+      <section id="reservar" className="mx-auto max-w-site border-b border-border px-8 py-24 text-center max-md:px-5 max-md:py-16">
+        <SectionHeading tag="05 — Reservá tu hora">Recovery Room · Turnos</SectionHeading>
+        <p className="mx-auto mb-8 max-w-[480px] text-lg text-neutral-300">Iniciá sesión con Google para reservar tu turno.</p>
+        <div className="flex justify-center">
+          <GoogleSignInButton onCredential={handleCredential} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="reservar" className="mx-auto max-w-site border-b border-border px-8 py-24 max-md:px-5 max-md:py-16">

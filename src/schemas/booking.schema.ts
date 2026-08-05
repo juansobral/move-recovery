@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-// Mirror del lado del cliente de las reglas de server/src/bookings/dto — no
-// comparten código (repos/runtimes distintos), pero deben devolver los mismos
-// mensajes en español para que el usuario vea el mismo texto de un lado y del otro.
+export const SLOTS = ['07:00', '08:00', '09:00', '10:00', '15:00', '16:00', '17:00', '18:00', '19:00'] as const;
+export const SERVICIOS = [
+  'Recovery Room', 'Presoterapia', 'Luz roja e infrarroja',
+  'Sauna infrarrojo', 'Sillón gravedad cero', 'Meditación y respiración',
+] as const;
+
 export const clientFieldsSchema = z.object({
-  name: z.string().trim().min(2, 'Ingresá tu nombre.'),
-  email: z.string().trim().min(1, 'Email inválido.').email('Email inválido.'),
-  phone: z.string().trim().min(6, 'Ingresá un teléfono válido.'),
   notes: z.string().optional(),
 });
 

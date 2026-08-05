@@ -6,7 +6,6 @@ import { cn } from '../../../lib/cn';
 import { clientFieldsSchema, type ClientFieldsValues } from '../../../schemas/booking.schema';
 import type { CreateBookingResponse } from '../../../types/booking.types';
 import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
 import { SelectedSlotSummary } from '../SelectedSlotSummary';
@@ -24,7 +23,7 @@ export const BookingForm = ({ date, selectedTime, isSubmitting, onSubmit }: Book
     register,
     handleSubmit,
     reset,
-    formState: { errors, isValid },
+    formState: { isValid },
   } = useForm<ClientFieldsValues>({ resolver: zodResolver(clientFieldsSchema), mode: 'onChange' });
 
   const submit = handleSubmit(async (values) => {
@@ -46,24 +45,6 @@ export const BookingForm = ({ date, selectedTime, isSubmitting, onSubmit }: Book
   return (
     <form onSubmit={submit} className="rounded-lg border border-border bg-card p-7">
       <h3 className="mb-[18px] text-lg uppercase tracking-wide">Tus datos</h3>
-
-      <div className="mb-4">
-        <Label htmlFor="booking-name">Nombre y apellido</Label>
-        <Input id="booking-name" {...register('name')} />
-        {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>}
-      </div>
-
-      <div className="mb-4">
-        <Label htmlFor="booking-email">Email</Label>
-        <Input id="booking-email" type="email" {...register('email')} />
-        {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
-      </div>
-
-      <div className="mb-4">
-        <Label htmlFor="booking-phone">Teléfono / WhatsApp</Label>
-        <Input id="booking-phone" type="tel" {...register('phone')} />
-        {errors.phone && <p className="mt-1 text-xs text-destructive">{errors.phone.message}</p>}
-      </div>
 
       <div className="mb-4">
         <Label htmlFor="booking-notes">Notas (opcional)</Label>
