@@ -1,4 +1,17 @@
-import { Body, ConflictException, Controller, Get, Headers, HttpCode, HttpStatus, Post, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  ConflictException,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PLANS, RESET_SESSION_PRICE } from '../catalog/catalog.constants';
 import { BookingsService } from '../bookings/bookings.service';
@@ -169,12 +182,14 @@ export class PaymentsController {
         String(payment.id),
       );
     } catch (e) {
-      if (e instanceof ConflictException) {
-        // El bloque ya no está disponible (alguien más lo tomó mientras se
-        // procesaba el pago) — reembolsamos en vez de dejar cobrado sin turno.
+      if (e instanceof ConflictException || e instanceof BadRequestException) {
+        // Falla permanente: el bloque ya no está disponible (ConflictException)
+        // o el intent quedó inválido (ej. fecha pasada, perfil incompleto) —
+        // en ningún caso un reintento de MercadoPago va a lograr crear la
+        // reserva, así que reembolsamos en vez de dejar cobrado sin turno.
         await this.mercadoPago.refundPayment(String(payment.id));
       } else {
-        throw e; // error transitorio — dejamos que MercadoPago reintente el webhook
+        throw e; // error transitorio (ej. DB caída) — dejamos que MercadoPago reintente el webhook
       }
     }
   }

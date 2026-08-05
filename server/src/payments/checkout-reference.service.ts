@@ -21,6 +21,8 @@ export interface SubscriptionIntent {
 
 export type CheckoutIntentPayload = OneOffBookingIntent | SubscriptionIntent;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // `external_reference` de MercadoPago admite 64 caracteres como máximo, solo
 // letras/dígitos/guiones/guiones bajos — un payload JSON firmado no entra ni
 // cerca. Por eso el intent se persiste acá y lo que viaja por MercadoPago es el
@@ -36,7 +38,11 @@ export class CheckoutReferenceService {
   }
 
   async verify(reference: string): Promise<CheckoutIntentPayload | null> {
-    if (!reference) return null;
+    // Postgres tira un error (22P02) si se le compara la columna uuid contra
+    // un string con forma inválida — validamos el formato antes de consultar
+    // para que una referencia ajena (o alguien probando con basura) resuelva
+    // en null limpio, no en un 500.
+    if (!reference || !UUID_RE.test(reference)) return null;
     const row = await this.repo.findOne({ where: { id: reference } });
     return row ? row.payload : null;
   }
