@@ -14,3 +14,12 @@ export const SERVICIOS = [
 ] as const;
 
 export type Servicio = (typeof SERVICIOS)[number];
+
+export const PLANS = {
+  standard: { label: 'Standard Reset', priceUyu: 2400, priceSocioUyu: 1200, sessionsPerMonth: 4 },
+  premium: { label: 'Premium Reset', priceUyu: 3840, priceSocioUyu: 1920, sessionsPerMonth: 8 },
+} as const;
+
+export type PlanKey = keyof typeof PLANS;
+
+export const RESET_SESSION_PRICE = { priceUyu: 600, priceSocioUyu: 300 } as const;
