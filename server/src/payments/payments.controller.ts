@@ -68,6 +68,11 @@ export class PaymentsController {
   @Post('subscriptions/checkout')
   @UseGuards(UserJwtAuthGuard)
   async checkoutSubscription(@Body() dto: CreateSubscriptionCheckoutDto, @CurrentUser() customer: AuthenticatedCustomer) {
+    const existing = await this.subscriptionsService.findCurrent(customer.id);
+    if (existing && existing.status === 'authorized') {
+      throw new ConflictException('Ya tenés una suscripción activa.');
+    }
+
     const user = await this.usersService.findById(customer.id);
     const plan = PLANS[dto.plan];
     const amount = user?.isSocio ? plan.priceSocioUyu : plan.priceUyu;
