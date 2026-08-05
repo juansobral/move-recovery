@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CheckoutIntent } from './entities/checkout-intent.entity';
 
 export interface OneOffBookingIntent {
   kind: 'oneoff';
@@ -18,37 +19,25 @@ export interface SubscriptionIntent {
   intendedBooking?: { date: string; time: string; service?: string; notes?: string };
 }
 
-export type CheckoutIntent = OneOffBookingIntent | SubscriptionIntent;
+export type CheckoutIntentPayload = OneOffBookingIntent | SubscriptionIntent;
 
+// `external_reference` de MercadoPago admite 64 caracteres como máximo, solo
+// letras/dígitos/guiones/guiones bajos — un payload JSON firmado no entra ni
+// cerca. Por eso el intent se persiste acá y lo que viaja por MercadoPago es el
+// UUID de la fila: 36 caracteres, charset válido, e imposible de adivinar (esa
+// imposibilidad es la "firma": si la fila no existe, la referencia no vale).
 @Injectable()
 export class CheckoutReferenceService {
-  constructor(private readonly config: ConfigService) {}
+  constructor(@InjectRepository(CheckoutIntent) private readonly repo: Repository<CheckoutIntent>) {}
 
-  private get secret(): string {
-    const s = this.config.get<string>('CHECKOUT_REFERENCE_SECRET');
-    if (!s) throw new Error('Falta CHECKOUT_REFERENCE_SECRET.');
-    return s;
+  async sign(intent: CheckoutIntentPayload): Promise<string> {
+    const row = await this.repo.save(this.repo.create({ userId: intent.userId, payload: intent }));
+    return row.id;
   }
 
-  sign(intent: CheckoutIntent): string {
-    const payload = Buffer.from(JSON.stringify(intent)).toString('base64url');
-    const signature = createHmac('sha256', this.secret).update(payload).digest('hex');
-    return `${payload}.${signature}`;
-  }
-
-  verify(reference: string): CheckoutIntent | null {
-    const [payload, signature] = reference.split('.');
-    if (!payload || !signature) return null;
-
-    const expected = createHmac('sha256', this.secret).update(payload).digest('hex');
-    const expectedBuf = Buffer.from(expected, 'hex');
-    const actualBuf = Buffer.from(signature, 'hex');
-    if (expectedBuf.length !== actualBuf.length || !timingSafeEqual(expectedBuf, actualBuf)) return null;
-
-    try {
-      return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as CheckoutIntent;
-    } catch {
-      return null;
-    }
+  async verify(reference: string): Promise<CheckoutIntentPayload | null> {
+    if (!reference) return null;
+    const row = await this.repo.findOne({ where: { id: reference } });
+    return row ? row.payload : null;
   }
 }

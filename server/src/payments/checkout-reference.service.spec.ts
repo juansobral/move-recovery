@@ -1,12 +1,6 @@
-import { ConfigService } from '@nestjs/config';
 import { CheckoutReferenceService, OneOffBookingIntent } from './checkout-reference.service';
 
 describe('CheckoutReferenceService', () => {
-  const makeService = () => {
-    const config = { get: () => 'test-secret' } as unknown as ConfigService;
-    return new CheckoutReferenceService(config);
-  };
-
   const sampleIntent: OneOffBookingIntent = {
     kind: 'oneoff',
     userId: 'u-1',
@@ -15,29 +9,36 @@ describe('CheckoutReferenceService', () => {
     service: 'Recovery Room',
   };
 
-  it('round-trips a signed intent', () => {
-    const service = makeService();
-    const reference = service.sign(sampleIntent);
-    expect(service.verify(reference)).toEqual(sampleIntent);
+  const makeService = () => {
+    const rows = new Map<string, { id: string; userId: string; payload: unknown }>();
+    let counter = 0;
+    const repo = {
+      create: jest.fn((data) => ({ ...data })),
+      save: jest.fn(async (row) => {
+        const id = `intent-${++counter}`;
+        const saved = { id, userId: row.userId, payload: row.payload };
+        rows.set(id, saved);
+        return saved;
+      }),
+      findOne: jest.fn(async ({ where: { id } }) => rows.get(id) ?? null),
+    };
+    return { service: new CheckoutReferenceService(repo as never), repo };
+  };
+
+  it('round-trips a signed intent via a short opaque reference', async () => {
+    const { service } = makeService();
+    const reference = await service.sign(sampleIntent);
+    expect(reference.length).toBeLessThanOrEqual(64);
+    expect(await service.verify(reference)).toEqual(sampleIntent);
   });
 
-  it('rejects a reference with a tampered payload', () => {
-    const service = makeService();
-    const reference = service.sign(sampleIntent);
-    const [payload, signature] = reference.split('.');
-    const tamperedPayload = Buffer.from(JSON.stringify({ ...sampleIntent, date: '2026-09-02' })).toString('base64url');
-    expect(service.verify(`${tamperedPayload}.${signature}`)).toBeNull();
+  it('rejects an unknown reference', async () => {
+    const { service } = makeService();
+    expect(await service.verify('does-not-exist')).toBeNull();
   });
 
-  it('rejects a reference with a tampered signature', () => {
-    const service = makeService();
-    const reference = service.sign(sampleIntent);
-    const [payload] = reference.split('.');
-    expect(service.verify(`${payload}.0000000000000000000000000000000000000000000000000000000000000000`)).toBeNull();
-  });
-
-  it('rejects a malformed reference', () => {
-    const service = makeService();
-    expect(service.verify('not-a-valid-reference')).toBeNull();
+  it('rejects an empty reference', async () => {
+    const { service } = makeService();
+    expect(await service.verify('')).toBeNull();
   });
 });

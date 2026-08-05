@@ -37,7 +37,7 @@ export class PaymentsController {
     const amount = user?.isSocio ? RESET_SESSION_PRICE.priceSocioUyu : RESET_SESSION_PRICE.priceUyu;
     const siteUrl = process.env.SITE_URL ?? 'http://localhost:5173';
 
-    const reference = this.checkoutReference.sign({
+    const reference = await this.checkoutReference.sign({
       kind: 'oneoff',
       userId: customer.id,
       date: dto.date,
@@ -66,7 +66,7 @@ export class PaymentsController {
     const amount = user?.isSocio ? plan.priceSocioUyu : plan.priceUyu;
     const siteUrl = process.env.SITE_URL ?? 'http://localhost:5173';
 
-    const reference = this.checkoutReference.sign({
+    const reference = await this.checkoutReference.sign({
       kind: 'subscription',
       userId: customer.id,
       plan: dto.plan,
@@ -89,7 +89,7 @@ export class PaymentsController {
   @Get('bookings/checkout-status')
   @UseGuards(UserJwtAuthGuard)
   async checkoutStatus(@Query('ref') ref: string, @CurrentUser() customer: AuthenticatedCustomer) {
-    const intent = this.checkoutReference.verify(ref);
+    const intent = await this.checkoutReference.verify(ref);
     if (!intent || intent.userId !== customer.id) {
       return { status: 'invalid' };
     }
@@ -137,7 +137,7 @@ export class PaymentsController {
     const payment = await this.mercadoPago.getPayment(paymentId);
     if (payment.status !== 'approved' || !payment.externalReference) return;
 
-    const intent = this.checkoutReference.verify(payment.externalReference);
+    const intent = await this.checkoutReference.verify(payment.externalReference);
     if (!intent || intent.kind !== 'oneoff') return;
 
     try {
@@ -157,7 +157,7 @@ export class PaymentsController {
     const data = await this.mercadoPago.getPreapproval(preapprovalId);
     if (data.status !== 'authorized' || !data.externalReference) return;
 
-    const intent = this.checkoutReference.verify(data.externalReference);
+    const intent = await this.checkoutReference.verify(data.externalReference);
     if (!intent || intent.kind !== 'subscription') return;
 
     const existing = await this.subscriptionsService.findByPreapprovalId(preapprovalId);
