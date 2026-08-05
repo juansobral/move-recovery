@@ -7,6 +7,7 @@ import { Booking } from './bookings/entities/booking.entity';
 import { BookingsModule } from './bookings/bookings.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { DiagModule } from './diag/diag.module';
+import { User } from './users/entities/user.entity';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { DiagModule } from './diag/diag.module';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         url: config.get<string>('DATABASE_URL'),
-        entities: [AdminUser, Booking],
+        entities: [AdminUser, Booking, User],
         migrations: [__dirname + '/migrations/*.js'],
         migrationsRun: false,
         synchronize: false,
