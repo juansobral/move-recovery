@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, ConflictException, Controller, Get, Headers, HttpCode, HttpStatus, Post, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PLANS, RESET_SESSION_PRICE } from '../catalog/catalog.constants';
 import { BookingsService } from '../bookings/bookings.service';
@@ -137,6 +137,13 @@ export class PaymentsController {
     const payment = await this.mercadoPago.getPayment(paymentId);
     if (payment.status !== 'approved' || !payment.externalReference) return;
 
+    // MercadoPago reintenta las notificaciones (y manda payment.created y
+    // payment.updated por el mismo pago): si ya reservamos con este pago, salimos.
+    // Sin esto, la segunda entrega chocaba contra UNIQUE(date, time) y terminaba
+    // reembolsando una reserva legítima ya confirmada.
+    const alreadyProcessed = await this.bookingsService.findByMpPaymentId(String(payment.id));
+    if (alreadyProcessed) return;
+
     const intent = await this.checkoutReference.verify(payment.externalReference);
     if (!intent || intent.kind !== 'oneoff') return;
 
@@ -146,10 +153,14 @@ export class PaymentsController {
         intent.userId,
         String(payment.id),
       );
-    } catch {
-      // El bloque ya no está disponible (alguien más lo tomó mientras se
-      // procesaba el pago) — reembolsamos en vez de dejar cobrado sin turno.
-      await this.mercadoPago.refundPayment(String(payment.id));
+    } catch (e) {
+      if (e instanceof ConflictException) {
+        // El bloque ya no está disponible (alguien más lo tomó mientras se
+        // procesaba el pago) — reembolsamos en vez de dejar cobrado sin turno.
+        await this.mercadoPago.refundPayment(String(payment.id));
+      } else {
+        throw e; // error transitorio — dejamos que MercadoPago reintente el webhook
+      }
     }
   }
 

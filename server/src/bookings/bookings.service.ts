@@ -89,6 +89,12 @@ export class BookingsService {
     return this.bookingsRepo.findOne({ where: { userId, date, time } });
   }
 
+  // MercadoPago reintenta los webhooks y manda payment.created/payment.updated
+  // por el mismo pago: esto es lo que hace idempotente al alta de la reserva.
+  findByMpPaymentId(mpPaymentId: string): Promise<Booking | null> {
+    return this.bookingsRepo.findOne({ where: { mpPaymentId } });
+  }
+
   private isUniqueViolation(e: unknown): boolean {
     const code = e instanceof QueryFailedError ? (e as unknown as { code?: string }).code : undefined;
     return Boolean(code && UNIQUE_VIOLATION_CODES.has(code));
