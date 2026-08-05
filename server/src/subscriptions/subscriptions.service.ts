@@ -64,4 +64,8 @@ export class SubscriptionsService {
     subscription.status = 'cancelled';
     return this.subscriptionsRepo.save(subscription);
   }
+
+  findByPreapprovalId(mpPreapprovalId: string): Promise<Subscription | null> {
+    return this.subscriptionsRepo.findOne({ where: { mpPreapprovalId } });
+  }
 }

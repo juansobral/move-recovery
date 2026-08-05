@@ -91,4 +91,9 @@ export class MercadoPagoService {
   async cancelPreapproval(preapprovalId: string): Promise<void> {
     await this.request(`/preapproval/${preapprovalId}`, { method: 'PUT', body: JSON.stringify({ status: 'cancelled' }) });
   }
+
+  async getPreapproval(preapprovalId: string): Promise<{ status: string; externalReference: string | null }> {
+    const data = await this.request(`/preapproval/${preapprovalId}`, { method: 'GET' });
+    return { status: data.status as string, externalReference: (data.external_reference as string | undefined) ?? null };
+  }
 }

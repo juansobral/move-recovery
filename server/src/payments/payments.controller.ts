@@ -12,6 +12,7 @@ import { CreateSubscriptionCheckoutDto } from './dto/create-subscription-checkou
 import { MercadoPagoService } from './mercadopago.service';
 import { verifyWebhookSignature } from './webhook-signature.util';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { addMonths, todayStr } from '../common/date.util';
 
 @Controller()
 export class PaymentsController {
@@ -130,7 +131,46 @@ export class PaymentsController {
     }
   }
 
-  private async handlePreapprovalWebhook(_preapprovalId: string): Promise<void> {
-    // Implementado en la próxima tarea.
+  private async handlePreapprovalWebhook(preapprovalId: string): Promise<void> {
+    const data = await this.mercadoPago.getPreapproval(preapprovalId);
+    if (data.status !== 'authorized' || !data.externalReference) return;
+
+    const intent = this.checkoutReference.verify(data.externalReference);
+    if (!intent || intent.kind !== 'subscription') return;
+
+    const existing = await this.subscriptionsService.findByPreapprovalId(preapprovalId);
+    const periodStart = todayStr();
+    const periodEnd = addMonths(periodStart, 1);
+
+    if (existing) {
+      // Cobro recurrente de un ciclo posterior: renovar créditos.
+      await this.subscriptionsService.renewPeriod(preapprovalId, periodStart, periodEnd);
+    } else {
+      await this.subscriptionsService.createFromPreapproval({
+        userId: intent.userId,
+        plan: intent.plan,
+        mpPreapprovalId: preapprovalId,
+        periodStart,
+        periodEnd,
+      });
+    }
+
+    if (intent.intendedBooking) {
+      const hasCredit = await this.subscriptionsService.tryConsumeCredit(intent.userId);
+      if (hasCredit) {
+        await this.bookingsService.create(
+          {
+            date: intent.intendedBooking.date,
+            time: intent.intendedBooking.time,
+            service: intent.intendedBooking.service,
+            notes: intent.intendedBooking.notes,
+          },
+          intent.userId,
+        ).catch(() => {
+          // El horario ya no está disponible — la suscripción sigue en pie,
+          // el cliente elige otro horario con el crédito ya activado.
+        });
+      }
+    }
   }
 }
