@@ -1835,6 +1835,154 @@ git commit -m "feat(web): gate booking behind Google login end to end"
 
 ---
 
+## Task 15: Customer account nav entry point + logout
+
+**Added post-implementation:** live testing after Task 14 surfaced a real gap — `/mi-cuenta` works correctly when visited directly, but nothing on the site links to it, and customers have no way to log out. This wasn't in the original design doc's task breakdown, but it's necessary for the delivered feature (a findable, usable profile area) to actually meet the original request.
+
+**Files:**
+- Modify: `src/components/layout/SiteNav/index.tsx`
+- Modify: `src/components/layout/MobileNav/index.tsx`
+
+**Interfaces:**
+- Consumes: `selectIsCustomerAuthenticated`, `loggedOut` (Task 10, `src/features/userAuth/userAuthSlice.ts`).
+- Produces: no new exports — purely wires existing state into the existing nav components.
+
+- [ ] **Step 1: Add the authenticated nav state to `SiteNav`**
+
+Replace `src/components/layout/SiteNav/index.tsx` in full:
+
+```tsx
+import { Link } from 'react-router-dom';
+import { loggedOut, selectIsCustomerAuthenticated } from '../../../features/userAuth/userAuthSlice';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { Button } from '../../ui/button';
+import { MobileNav } from '../MobileNav';
+import { NAV_LINKS } from '../nav-links';
+
+export const SiteNav = (): JSX.Element => {
+  const isAuthenticated = useAppSelector(selectIsCustomerAuthenticated);
+  const dispatch = useAppDispatch();
+
+  return (
+    <header
+      id="top"
+      className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-black/[0.82] px-8 py-[18px] backdrop-blur-[10px] max-md:px-5 max-md:py-3.5"
+    >
+      <Link to="/" className="font-heading text-2xl font-black tracking-[2px]">
+        MOVE<span className="align-super text-xs font-semibold">®</span>
+      </Link>
+      <nav className="hidden gap-7 md:flex">
+        {NAV_LINKS.map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            className="text-[13px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
+      <div className="flex items-center gap-3">
+        {isAuthenticated ? (
+          <>
+            <Link
+              to="/mi-cuenta"
+              className="hidden text-[13px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+            >
+              Mi cuenta
+            </Link>
+            <Button type="button" variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => dispatch(loggedOut())}>
+              Salir
+            </Button>
+          </>
+        ) : (
+          <Button asChild size="sm" className="hidden sm:inline-flex">
+            <a href="#reservar">Reservar</a>
+          </Button>
+        )}
+        <MobileNav />
+      </div>
+    </header>
+  );
+};
+```
+
+- [ ] **Step 2: Add the same to `MobileNav`**
+
+Replace `src/components/layout/MobileNav/index.tsx` in full:
+
+```tsx
+import { Menu } from 'lucide-react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { loggedOut, selectIsCustomerAuthenticated } from '../../../features/userAuth/userAuthSlice';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from '../../ui/sheet';
+import { NAV_LINKS } from '../nav-links';
+
+export const MobileNav = (): JSX.Element => {
+  const [open, setOpen] = useState(false);
+  const isAuthenticated = useAppSelector(selectIsCustomerAuthenticated);
+  const dispatch = useAppDispatch();
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger className="md:hidden" aria-label="Abrir menú">
+        <Menu className="h-6 w-6" />
+      </SheetTrigger>
+      <SheetContent>
+        <nav className="mt-8 flex flex-col gap-6">
+          {NAV_LINKS.map((link) => (
+            <SheetClose asChild key={link.href}>
+              <a
+                href={link.href}
+                className="font-heading text-sm uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            </SheetClose>
+          ))}
+          {isAuthenticated && (
+            <>
+              <SheetClose asChild>
+                <Link
+                  to="/mi-cuenta"
+                  className="font-heading text-sm uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Mi cuenta
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <button
+                  type="button"
+                  className="text-left font-heading text-sm uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                  onClick={() => dispatch(loggedOut())}
+                >
+                  Salir
+                </button>
+              </SheetClose>
+            </>
+          )}
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+};
+```
+
+- [ ] **Step 3: Verify**
+
+Run `npx tsc -b --noEmit` (expect exit 0) and `npm run build` (expect success) from the repo root. Live verification (logged-in nav shows "Mi cuenta"/"Salir", logged-out nav shows "Reservar", both on desktop and the mobile sheet) is deferred to the controller/human, same as Task 14's Step 5 — no backend/live-session dependency is needed for the code itself, but confirming the real logged-in visual state requires an actual browser session already carrying a valid customer token.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/components/layout/SiteNav/index.tsx src/components/layout/MobileNav/index.tsx
+git commit -m "feat(web): add mi cuenta nav link and logout for customers"
+```
+
+---
+
 ## Self-Review Notes
 
 - **Spec coverage:** every section of the design doc maps to a task — data model (Tasks 2, 7), Google auth architecture (Tasks 3–6), booking-flow changes (Task 7), profile/bookings API (Task 8), frontend login UI (Tasks 9, 14), profile completion (Task 12), mi cuenta (Task 13), form shrink (Task 14). Out-of-scope items (plans, MercadoPago, socio admin UI, self-service cancellation) are explicitly not present anywhere in this plan, matching the spec's "Out of scope" section.
