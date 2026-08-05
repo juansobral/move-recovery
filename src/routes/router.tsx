@@ -31,6 +31,19 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: '/admin/usuarios',
+    element: <RequireAuth />,
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { AdminUsersPage } = await import('../pages/AdminUsersPage');
+          return { Component: AdminUsersPage };
+        },
+      },
+    ],
+  },
+  {
     path: '/completar-perfil',
     element: <RequireUserAuth />,
     children: [
