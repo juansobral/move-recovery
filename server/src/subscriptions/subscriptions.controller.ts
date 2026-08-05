@@ -30,7 +30,16 @@ export class SubscriptionsController {
   async cancel(@CurrentUser() customer: AuthenticatedCustomer) {
     const subscription = await this.subscriptionsService.findCurrent(customer.id);
     if (!subscription) throw new NotFoundException('No tenés una suscripción activa.');
-    await this.mercadoPago.cancelPreapproval(subscription.mpPreapprovalId);
+
+    try {
+      await this.mercadoPago.cancelPreapproval(subscription.mpPreapprovalId);
+    } catch (e) {
+      // Seguimos igual: si ya estaba cancelada en MercadoPago (o hay un error de
+      // red), no tiene sentido dejar al cliente sin forma de cancelar localmente
+      // — lo que importa para el acceso es currentPeriodEnd/créditos, no este flag.
+      console.error('[subscriptions] fallo al cancelar en MercadoPago:', (e as Error).message);
+    }
+
     await this.subscriptionsService.markCancelled(customer.id);
     return { ok: true };
   }

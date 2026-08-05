@@ -24,7 +24,9 @@ export const userApi = createApi({
     }),
     createBookingCheckout: builder.mutation<CheckoutResult, CreateBookingRequest>({
       query: (body) => ({ url: '/bookings/checkout', method: 'POST', data: body }),
-      invalidatesTags: ['MyBookings'],
+      // La reserva cubierta por crédito descuenta sessionCreditsRemaining en el
+      // server, así que el plan cacheado también queda viejo.
+      invalidatesTags: ['MyBookings', 'MySubscription'],
     }),
     createSubscriptionCheckout: builder.mutation<
       { initPoint: string; reference: string },
