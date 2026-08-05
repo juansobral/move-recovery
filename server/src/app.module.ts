@@ -8,6 +8,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { DiagModule } from './diag/diag.module';
 import { Subscription } from './subscriptions/entities/subscription.entity';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 
@@ -37,6 +38,7 @@ import { UsersModule } from './users/users.module';
     BookingsModule,
     DiagModule,
     UsersModule,
+    SubscriptionsModule,
   ],
 })
 export class AppModule {}
