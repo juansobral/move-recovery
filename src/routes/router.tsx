@@ -44,6 +44,19 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: '/mi-cuenta',
+    element: <RequireUserAuth />,
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { MiCuentaPage } = await import('../pages/MiCuentaPage');
+          return { Component: MiCuentaPage };
+        },
+      },
+    ],
+  },
+  {
     path: '*',
     lazy: async () => {
       const { NotFoundPage } = await import('../pages/NotFoundPage');
