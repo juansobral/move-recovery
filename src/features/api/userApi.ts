@@ -1,12 +1,13 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { userAxiosBaseQuery } from '../../lib/userAxiosBaseQuery';
-import type { Booking, CreateBookingRequest, CreateBookingResponse } from '../../types/booking.types';
+import type { Booking, CreateBookingRequest } from '../../types/booking.types';
+import type { CheckoutResult, CheckoutStatus, Subscription } from '../../types/subscription.types';
 import type { GoogleLoginResponse, UserProfile } from '../../types/user.types';
 
 export const userApi = createApi({
   reducerPath: 'userApi',
   baseQuery: userAxiosBaseQuery(),
-  tagTypes: ['MyBookings'],
+  tagTypes: ['MyBookings', 'MySubscription'],
   endpoints: (builder) => ({
     loginWithGoogle: builder.mutation<GoogleLoginResponse, { idToken: string }>({
       query: (body) => ({ url: '/users/auth/google', method: 'POST', data: body }),
@@ -21,9 +22,27 @@ export const userApi = createApi({
       query: () => ({ url: '/users/me/bookings', method: 'GET' }),
       providesTags: ['MyBookings'],
     }),
-    createBooking: builder.mutation<CreateBookingResponse, CreateBookingRequest>({
-      query: (body) => ({ url: '/bookings', method: 'POST', data: body }),
+    createBookingCheckout: builder.mutation<CheckoutResult, CreateBookingRequest>({
+      query: (body) => ({ url: '/bookings/checkout', method: 'POST', data: body }),
       invalidatesTags: ['MyBookings'],
+    }),
+    createSubscriptionCheckout: builder.mutation<
+      { initPoint: string; reference: string },
+      { plan: 'standard' | 'premium'; intendedBooking?: CreateBookingRequest }
+    >({
+      query: (body) => ({ url: '/subscriptions/checkout', method: 'POST', data: body }),
+    }),
+    getCheckoutStatus: builder.query<CheckoutStatus, string>({
+      query: (ref) => ({ url: '/bookings/checkout-status', method: 'GET', params: { ref } }),
+    }),
+    getMySubscription: builder.query<Subscription | null, void>({
+      query: () => ({ url: '/subscriptions/me', method: 'GET' }),
+      transformResponse: (response: Subscription | '' | null) => (response ? response : null),
+      providesTags: ['MySubscription'],
+    }),
+    cancelSubscription: builder.mutation<{ ok: true }, void>({
+      query: () => ({ url: '/subscriptions/me', method: 'DELETE' }),
+      invalidatesTags: ['MySubscription'],
     }),
   }),
 });
@@ -33,5 +52,10 @@ export const {
   useGetMeQuery,
   useCompleteProfileMutation,
   useGetMyBookingsQuery,
-  useCreateBookingMutation,
+  useCreateBookingCheckoutMutation,
+  useCreateSubscriptionCheckoutMutation,
+  useGetCheckoutStatusQuery,
+  useLazyGetCheckoutStatusQuery,
+  useGetMySubscriptionQuery,
+  useCancelSubscriptionMutation,
 } = userApi;
