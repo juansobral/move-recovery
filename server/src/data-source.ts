@@ -11,12 +11,13 @@ import { DataSource } from 'typeorm';
 loadEnv({ path: resolve(__dirname, '../../.env') });
 import { AdminUser } from './auth/entities/admin-user.entity';
 import { Booking } from './bookings/entities/booking.entity';
+import { Subscription } from './subscriptions/entities/subscription.entity';
 import { User } from './users/entities/user.entity';
 
 const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  entities: [AdminUser, Booking, User],
+  entities: [AdminUser, Booking, User, Subscription],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
 });

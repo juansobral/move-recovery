@@ -7,6 +7,7 @@ import { Booking } from './bookings/entities/booking.entity';
 import { BookingsModule } from './bookings/bookings.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { DiagModule } from './diag/diag.module';
+import { Subscription } from './subscriptions/entities/subscription.entity';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 
@@ -21,7 +22,7 @@ import { UsersModule } from './users/users.module';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         url: config.get<string>('DATABASE_URL'),
-        entities: [AdminUser, Booking, User],
+        entities: [AdminUser, Booking, User, Subscription],
         migrations: [__dirname + '/migrations/*.js'],
         migrationsRun: false,
         synchronize: false,
