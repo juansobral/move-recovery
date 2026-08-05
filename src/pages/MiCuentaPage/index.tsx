@@ -1,14 +1,18 @@
-import { useMemo } from 'react';
-import { useGetMeQuery, useGetMyBookingsQuery } from '../../features/api/userApi';
+import { useMemo, useState } from 'react';
+import { useGetMeQuery, useGetMyBookingsQuery, useGetMySubscriptionQuery } from '../../features/api/userApi';
 import { fechaCorta, todayStr } from '../../lib/dateUtils';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
+import { CancelSubscriptionDialog } from '../../components/account/CancelSubscriptionDialog';
 
 export const MiCuentaPage = (): JSX.Element => {
   useDocumentTitle('Mi cuenta · MOVE®');
   const { data: me } = useGetMeQuery();
   const { data: bookings = [] } = useGetMyBookingsQuery();
+  const { data: subscription } = useGetMySubscriptionQuery();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const { upcoming, past } = useMemo(() => {
     const hoy = todayStr();
@@ -27,7 +31,27 @@ export const MiCuentaPage = (): JSX.Element => {
 
       <Card className="p-6">
         <h2 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Tu plan</h2>
-        <p className="text-foreground">Sin plan activo todavía.</p>
+        {subscription ? (
+          <div className="space-y-2">
+            <p className="text-foreground">
+              {subscription.plan === 'standard' ? 'Standard Reset' : 'Premium Reset'} — {subscription.sessionCreditsRemaining} de{' '}
+              {subscription.sessionCreditsTotal} sesiones restantes este mes
+            </p>
+            <p className="text-sm text-muted-foreground">Vence el {subscription.currentPeriodEnd}</p>
+            {subscription.status === 'authorized' && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setCancelDialogOpen(true)}>
+                Cancelar suscripción
+              </Button>
+            )}
+            <CancelSubscriptionDialog
+              open={cancelDialogOpen}
+              onOpenChange={setCancelDialogOpen}
+              currentPeriodEnd={subscription.currentPeriodEnd}
+            />
+          </div>
+        ) : (
+          <p className="text-foreground">Sin plan activo todavía.</p>
+        )}
       </Card>
 
       <div>
