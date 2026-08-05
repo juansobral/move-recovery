@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { RequireAuth } from './RequireAuth';
+import { RequireUserAuth } from './RequireUserAuth';
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +26,19 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { AdminDashboardPage } = await import('../pages/AdminDashboardPage');
           return { Component: AdminDashboardPage };
+        },
+      },
+    ],
+  },
+  {
+    path: '/completar-perfil',
+    element: <RequireUserAuth />,
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { CompleteProfilePage } = await import('../pages/CompleteProfilePage');
+          return { Component: CompleteProfilePage };
         },
       },
     ],
