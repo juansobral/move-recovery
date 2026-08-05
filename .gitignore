@@ -1,6 +1,11 @@
 # Dependencias
 node_modules/
 
+# Build (frontend Vite y backend NestJS)
+dist/
+server/dist/
+*.tsbuildinfo
+
 # Variables de entorno — NUNCA commitear (usar .env.example como plantilla)
 .env
 .env.*

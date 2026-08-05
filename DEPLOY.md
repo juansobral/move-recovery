@@ -1,25 +1,21 @@
 # Deploy en Vercel + Neon — MOVE Recovery Room
 
-Guía paso a paso para dejar el sitio online con una URL pública y reservas que se guardan de verdad. Son ~10 minutos. No hace falta saber programar.
+Guía paso a paso para dejar el sitio online con una URL pública y reservas que se guardan de verdad.
 
 Estructura del proyecto (ya lista):
 
 ```
 move-recovery-vercel/
-├─ index.html        # sitio público (estático)
-├─ styles.css
-├─ app.js
-├─ admin.html        # panel de reservas → se abre en /admin
-├─ admin.css
-├─ admin.js
-├─ img/              # fotos del equipo
-├─ api/              # funciones serverless (backend)
-│  ├─ config.js
-│  ├─ availability.js
-│  └─ bookings.js    # crear (POST), listar (GET), cancelar (DELETE)
-├─ lib/
-│  ├─ db.js          # conexión a la base Neon
-│  └─ mail.js        # envío de emails + plantillas
+├─ index.html, src/       # front (React + Vite): landing, reservas, /admin
+├─ public/                # imágenes, robots.txt
+├─ api/index.js           # única función serverless de Vercel
+├─ server/                # backend NestJS (workspace propio)
+│  └─ src/
+│     ├─ auth/            # login (JWT) + script de seed de la cuenta admin
+│     ├─ bookings/        # reservas (crear, listar, cancelar)
+│     ├─ catalog/         # horarios y servicios
+│     ├─ mail/            # envío de emails + plantillas
+│     └─ migrations/      # migraciones de TypeORM
 ├─ vercel.json
 └─ package.json
 ```
@@ -38,15 +34,11 @@ move-recovery-vercel/
 
 4. Copiala y guardala: la vas a pegar en Vercel en el Paso 3. Usá la versión **"Pooled connection"** si te da a elegir.
 
-> No hace falta crear ninguna tabla a mano: la app la crea sola la primera vez que se usa.
+> A diferencia de la versión anterior del sitio, acá **sí hace falta correr las migraciones** una vez (Paso 5) — la tabla ya no se crea sola en el primer request.
 
 ---
 
 ## Paso 2 — Subir el proyecto a Vercel
-
-Cualquiera de las dos formas funciona. La **A** es la más simple si no usás Git.
-
-### Opción A — con la línea de comandos (rápida)
 
 En la Terminal, parado dentro de la carpeta `move-recovery-vercel`:
 
@@ -62,11 +54,7 @@ Cuando termine te da una URL de preview. Para la versión pública final:
 vercel --prod
 ```
 
-### Opción B — desde la web de Vercel
-
-1. Subí esta carpeta a un repositorio de GitHub.
-2. En https://vercel.com → "Add New… → Project" → importá ese repo.
-3. Dejá todo por defecto (Vercel detecta las funciones de `/api` solo) y dale "Deploy".
+Vercel corre `npm run build` (compila el backend en `server/` con `nest build` y el front con `vite build`) y sirve `dist/` como estático, con `api/index.js` como la única función serverless detrás de `/api/*`. Si el proyecto ya estaba vinculado a Vercel desde antes, revisá en **Settings → Build & Development Settings** que no haya un Framework Preset o comandos guardados de la versión vieja (estática) del sitio — con este repo alcanza con los defaults + lo que ya está en `vercel.json`.
 
 ---
 
@@ -89,7 +77,7 @@ En Vercel, entrá a tu proyecto → **Settings → Environment Variables** y agr
 | Name | Value | Para qué sirve |
 |------|-------|----------------|
 | `DATABASE_URL` | la connection string de Neon del Paso 1 | guardar las reservas |
-| `ADMIN_KEY` | una clave inventada por vos, larga | entrar a `/admin` |
+| `JWT_SECRET` | una clave inventada por vos, larga y aleatoria | firmar las sesiones de `/admin` |
 | `BREVO_API_KEY` | la API key del Paso 3 (`xkeysib-…`) | enviar los emails |
 | `MAIL_FROM` | `movesc.performance@gmail.com` | remitente (tiene que ser el verificado en Brevo) |
 | `MAIL_ADMIN` | `movesc.performance@gmail.com` | a dónde llega el aviso de nueva reserva |
@@ -101,9 +89,23 @@ Marcá las tres casillas (Production, Preview, Development). Guardá y volvé a 
 vercel --prod
 ```
 
-(o en la web: pestaña "Deployments" → botón "Redeploy").
-
 > Si `BREVO_API_KEY` no está configurada, las reservas se siguen guardando normalmente y solo se saltea el envío de mails (queda un aviso en los logs). Nunca se pierde una reserva por un problema de email.
+
+---
+
+## Paso 5 — Migraciones y cuenta admin
+
+A diferencia de la versión anterior, la tabla de reservas y la de usuarios admin **no se crean solas**. Con `DATABASE_URL` ya apuntando a Neon (podés usar un `.env` local con la misma connection string, o exportarla en la terminal):
+
+```bash
+npm install
+npm run migration:run --workspace=server
+SEED_ADMIN_EMAIL=vos@move.uy SEED_ADMIN_PASSWORD="una-clave-larga" npm run seed:admin --workspace=server
+```
+
+Esto crea las tablas `bookings` y `admin_users`, y da de alta la primera (y por ahora única) cuenta para entrar a `/admin`. `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` no hace falta dejarlas configuradas en Vercel — son solo para correr el script una vez.
+
+Para cambiar la clave más adelante, corré `seed:admin` de nuevo con el mismo email: actualiza el hash en vez de crear una cuenta nueva.
 
 ---
 
@@ -111,13 +113,13 @@ vercel --prod
 
 - **Sitio público:** la URL que te dio Vercel (por ejemplo `https://move-recovery.vercel.app`).
 - **Probar una reserva:** entrá, elegí fecha y horario, completá y confirmá. Deberían llegar dos mails: la confirmación con el protocolo al cliente y el aviso a `movesc.performance@gmail.com`.
-- **Panel de reservas:** abrí `https://TU-URL/admin` y poné tu `ADMIN_KEY`. Queda guardada en el navegador, así que no la pedís cada vez.
+- **Panel de reservas:** abrí `https://TU-URL/admin` e iniciá sesión con el email y la clave que usaste en el Paso 5.
 
 ---
 
 ## Los dos emails
 
-Al confirmar una reserva se envían dos mails, definidos en `lib/mail.js`:
+Al confirmar una reserva se envían dos mails, definidos en `server/src/mail/mail.service.ts`:
 
 1. **Al cliente** — confirmación del turno + qué llevar (chancletas, toalla, ropa deportiva, agua) + protocolo de la sesión paso a paso + uso recomendado + avisos de contraindicaciones.
 2. **A `movesc.performance@gmail.com`** — aviso interno con todos los datos del cliente (el email es clickeable y el teléfono abre WhatsApp) y botón directo al panel.
@@ -126,7 +128,7 @@ Hay un tercero que sale solo cuando cancelás una reserva desde `/admin` con la 
 
 ### Cómo editar los textos
 
-Todo el contenido editable está arriba en `lib/mail.js`, en cuatro listas:
+Todo el contenido editable está en `server/src/mail/mail-content.constants.ts`, en cuatro listas:
 
 | Lista | Qué controla |
 |-------|--------------|
@@ -143,32 +145,19 @@ Cada ítem es `['Título', 'descripción']` (o solo texto en `CUANDO_USAR` y `AV
 
 ## El panel `/admin`
 
+- **Login:** email + contraseña (JWT) — ver Paso 5 para crear la cuenta.
 - **Métricas arriba:** turnos de hoy, próximos 7 días, próximas y total histórico.
 - **Filtros:** búsqueda libre por nombre / email / teléfono / notas, período (próximas, hoy, 7 días, pasadas, todas), servicio y fecha exacta.
 - **Orden:** clic en los encabezados de Fecha, Cliente o Servicio.
 - **Cancelar:** botón por fila, con confirmación. Libera el bloque para que otra persona lo reserve y opcionalmente le avisa al cliente por mail.
 
-La página está marcada como `noindex` y bloqueada en `robots.txt`, así que no aparece en Google. La protección es la `ADMIN_KEY`: usá una clave larga y no la compartas por canales públicos.
+La página está marcada como `noindex` y bloqueada en `robots.txt`, así que no aparece en Google.
 
 ---
 
 ## No me llegan los emails
 
-Abrí esta URL en el navegador:
-
-```
-https://TU-URL/api/diag?key=TU_ADMIN_KEY
-```
-
-Te dice exactamente qué está bien y qué falta: variables configuradas, conexión a Neon, estado de la cuenta de Brevo, si el remitente está verificado y cuántos emails te quedan. Mirá la lista `problemas` y la de `siguientes_pasos`. Nunca muestra el valor de una credencial, solo los primeros y últimos caracteres.
-
-Para mandarte un mail de prueba sin tener que hacer una reserva:
-
-```
-https://TU-URL/api/diag?key=TU_ADMIN_KEY&test=tu@email.com
-```
-
-Llega el mail de confirmación completo, con el protocolo, tal como lo recibe un cliente.
+Entrá a `/admin`, iniciá sesión y tocá el botón **Diagnóstico**. Te dice exactamente qué está bien y qué falta: variables configuradas, conexión a Neon, estado de la cuenta de Brevo, si el remitente está verificado y cuántos emails te quedan. Mirá la lista de problemas y los siguientes pasos sugeridos. Nunca muestra el valor de una credencial, solo los primeros y últimos caracteres. Desde ahí mismo podés mandarte un mail de prueba sin tener que hacer una reserva.
 
 ### Las causas más comunes
 
@@ -178,6 +167,7 @@ Llega el mail de confirmación completo, con el protocolo, tal como lo recibe un
 | Reserva se guarda pero no llega nada | Igual que arriba: el envío se saltea a propósito para no romper la reserva | Paso 3 y 4 |
 | `remitente SIN VERIFICAR` | Está cargado en Brevo pero no confirmaste el mail | Buscá el mail de Brevo en `movesc.performance@gmail.com` (revisá spam) y hacé clic en el link |
 | `API key rechazada (401)` | Copiaste la **SMTP key** en lugar de la **API key** | Son distintas. Settings → SMTP & API → pestaña **API keys** |
+| No puedo entrar a `/admin` | La cuenta admin no existe todavía, o la clave cambió | Corré `npm run seed:admin --workspace=server` (Paso 5) |
 | Configuré todo y sigue sin andar | Vercel toma variables nuevas solo en el siguiente deploy | `vercel --prod` o Deployments → Redeploy |
 | Llega al equipo pero no al cliente | El mail cayó en spam del cliente | Normal al arrancar con Gmail como remitente. Mejora con dominio propio y DKIM |
 
@@ -189,11 +179,11 @@ En Vercel → tu proyecto → **Logs**, filtrá por `[mail]`. Cada envío fallid
 
 ## Horarios
 
-Los bloques de 1 h (mañana 7–11, tarde 15–20) están en `lib/db.js`, constante `SLOTS`. Editá esa lista y volvé a desplegar para cambiarlos.
+Los bloques de 1 h (mañana 7–11, tarde 15–20) están en `server/src/catalog/catalog.constants.ts`, constante `SLOTS`. Editá esa lista y volvé a desplegar para cambiarlos — el front los pide en tiempo real a `GET /api/config`, no hace falta tocar nada del lado del cliente.
 
 ## Notas
 
 - **Costo:** los planes gratis de Vercel, Neon y Brevo alcanzan de sobra para arrancar en producción. El límite más cercano es el de Brevo: 300 mails/día = ~150 reservas diarias.
-- **Dirección en el mapa:** en `index.html`, sección `#ubicacion`, hay un comentario `<!-- TODO -->` donde va la calle y número.
+- **Dirección en el mapa:** en `src/components/landing/LocationSection/index.tsx` hay un comentario `TODO` donde va la calle y número.
 - **Dominio propio:** después podés conectar un dominio (ej. `recovery.move.uy`) desde Settings → Domains en Vercel. Si lo hacés, actualizá `SITE_URL`.
 - **Próximos pasos sugeridos:** recordatorio automático 24 h antes del turno, y confirmación por WhatsApp además del mail.
