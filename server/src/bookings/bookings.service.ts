@@ -85,6 +85,10 @@ export class BookingsService {
     return { ok: true, id, notified };
   }
 
+  findByUserAndSlot(userId: string, date: string, time: string): Promise<Booking | null> {
+    return this.bookingsRepo.findOne({ where: { userId, date, time } });
+  }
+
   private isUniqueViolation(e: unknown): boolean {
     const code = e instanceof QueryFailedError ? (e as unknown as { code?: string }).code : undefined;
     return Boolean(code && UNIQUE_VIOLATION_CODES.has(code));

@@ -1,4 +1,4 @@
-import { Body, Controller, Headers, HttpCode, HttpStatus, Post, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PLANS, RESET_SESSION_PRICE } from '../catalog/catalog.constants';
 import { BookingsService } from '../bookings/bookings.service';
@@ -84,6 +84,28 @@ export class PaymentsController {
     });
 
     return { initPoint, reference };
+  }
+
+  @Get('bookings/checkout-status')
+  @UseGuards(UserJwtAuthGuard)
+  async checkoutStatus(@Query('ref') ref: string, @CurrentUser() customer: AuthenticatedCustomer) {
+    const intent = this.checkoutReference.verify(ref);
+    if (!intent || intent.userId !== customer.id) {
+      return { status: 'invalid' };
+    }
+
+    if (intent.kind === 'oneoff') {
+      const booking = await this.bookingsService.findByUserAndSlot(customer.id, intent.date, intent.time);
+      return booking ? { status: 'completed', booking } : { status: 'pending' };
+    }
+
+    const subscription = await this.subscriptionsService.findCurrent(customer.id);
+    if (!subscription) return { status: 'pending' };
+
+    if (!intent.intendedBooking) return { status: 'completed', booking: null };
+
+    const booking = await this.bookingsService.findByUserAndSlot(customer.id, intent.intendedBooking.date, intent.intendedBooking.time);
+    return { status: 'completed', booking: booking ?? null };
   }
 
   @Post('payments/webhook')
