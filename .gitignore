@@ -1,3 +1,6 @@
+# Worktrees de desarrollo (superpowers:using-git-worktrees)
+.worktrees/
+
 # Dependencias
 node_modules/
 
