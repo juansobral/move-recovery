@@ -4,6 +4,7 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { todayStr } from '../common/date.util';
 import { SERVICIOS, SLOTS } from '../catalog/catalog.constants';
 import { MailService } from '../mail/mail.service';
+import { User } from '../users/entities/user.entity';
 import { AvailabilityQueryDto } from './dto/availability-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { Booking } from './entities/booking.entity';
@@ -17,6 +18,7 @@ const UNIQUE_VIOLATION_CODES = new Set(['23505', '23P01']);
 export class BookingsService {
   constructor(
     @InjectRepository(Booking) private readonly bookingsRepo: Repository<Booking>,
+    @InjectRepository(User) private readonly usersRepo: Repository<User>,
     private readonly mail: MailService,
   ) {}
 
@@ -34,9 +36,10 @@ export class BookingsService {
     return this.bookingsRepo.find({ order: { date: 'DESC', time: 'DESC' } });
   }
 
-  async create(dto: CreateBookingDto): Promise<CreateBookingResponse> {
+  async create(dto: CreateBookingDto, userId: string): Promise<CreateBookingResponse> {
     if (dto.date < todayStr()) throw new BadRequestException('No se puede reservar en una fecha pasada.');
 
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } });
     const service = (SERVICIOS as readonly string[]).includes(dto.service ?? '') ? (dto.service as string) : 'Recovery Room';
 
     let booking: Booking;
@@ -45,11 +48,12 @@ export class BookingsService {
         this.bookingsRepo.create({
           date: dto.date,
           time: dto.time,
-          name: dto.name,
-          email: dto.email,
-          phone: dto.phone,
+          name: user.name,
+          email: user.email,
+          phone: user.phone ?? '',
           service,
           notes: dto.notes || null,
+          userId: user.id,
         }),
       );
     } catch (e) {

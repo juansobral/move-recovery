@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
 // date/time se guardan como TEXT a propósito (no tipos temporales nativos de
 // Postgres): en toda la app se tratan como tokens de negocio opacos
@@ -31,6 +32,13 @@ export class Booking {
 
   @Column({ type: 'text', nullable: true })
   notes: string | null;
+
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

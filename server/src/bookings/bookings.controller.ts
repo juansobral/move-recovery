@@ -1,5 +1,8 @@
 import { BadRequestException, Body, Controller, Delete, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserJwtAuthGuard } from '../users/guards/user-jwt-auth.guard';
+import { CurrentUser } from '../users/decorators/current-user.decorator';
+import { AuthenticatedCustomer } from '../users/users.types';
 import { AvailabilityQueryDto } from './dto/availability-query.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { BookingsService } from './bookings.service';
@@ -17,8 +20,9 @@ export class BookingsController {
   }
 
   @Post()
-  create(@Body() dto: CreateBookingDto): Promise<CreateBookingResponse> {
-    return this.bookingsService.create(dto);
+  @UseGuards(UserJwtAuthGuard)
+  create(@Body() dto: CreateBookingDto, @CurrentUser() customer: AuthenticatedCustomer): Promise<CreateBookingResponse> {
+    return this.bookingsService.create(dto, customer.id);
   }
 
   @Delete()
