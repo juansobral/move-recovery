@@ -6,8 +6,10 @@ import {
   useCreateSubscriptionCheckoutMutation,
   useGetMySubscriptionQuery,
 } from '../features/api/userApi';
+import { selectIsCustomerAuthenticated } from '../features/userAuth/userAuthSlice';
 import { todayStr } from '../lib/dateUtils';
 import type { ClientFieldsValues } from '../schemas/booking.schema';
+import { useAppSelector } from '../store/hooks';
 import type { CreateBookingResponse } from '../types/booking.types';
 
 export function useBookingFlow() {
@@ -15,9 +17,11 @@ export function useBookingFlow() {
   const [service, setService] = useState('');
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
+  const isAuthenticated = useAppSelector(selectIsCustomerAuthenticated);
+
   const { data: config } = useGetConfigQuery();
   const { data: availability, isFetching: isLoadingSlots } = useGetAvailabilityQuery(date, { skip: !date });
-  const { data: subscription } = useGetMySubscriptionQuery();
+  const { data: subscription } = useGetMySubscriptionQuery(undefined, { skip: !isAuthenticated });
   const [createBookingCheckout, { isLoading: isSubmitting }] = useCreateBookingCheckoutMutation();
   const [createSubscriptionCheckout] = useCreateSubscriptionCheckoutMutation();
 
