@@ -1,0 +1,66 @@
+import { createBrowserRouter } from 'react-router-dom';
+import { RequireAuth } from './RequireAuth';
+import { RequireUserAuth } from './RequireUserAuth';
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    lazy: async () => {
+      const { LandingPage } = await import('../pages/LandingPage');
+      return { Component: LandingPage };
+    },
+  },
+  {
+    path: '/admin/login',
+    lazy: async () => {
+      const { AdminLoginPage } = await import('../pages/AdminLoginPage');
+      return { Component: AdminLoginPage };
+    },
+  },
+  {
+    path: '/admin',
+    element: <RequireAuth />,
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { AdminDashboardPage } = await import('../pages/AdminDashboardPage');
+          return { Component: AdminDashboardPage };
+        },
+      },
+    ],
+  },
+  {
+    path: '/completar-perfil',
+    element: <RequireUserAuth />,
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { CompleteProfilePage } = await import('../pages/CompleteProfilePage');
+          return { Component: CompleteProfilePage };
+        },
+      },
+    ],
+  },
+  {
+    path: '/mi-cuenta',
+    element: <RequireUserAuth />,
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { MiCuentaPage } = await import('../pages/MiCuentaPage');
+          return { Component: MiCuentaPage };
+        },
+      },
+    ],
+  },
+  {
+    path: '*',
+    lazy: async () => {
+      const { NotFoundPage } = await import('../pages/NotFoundPage');
+      return { Component: NotFoundPage };
+    },
+  },
+]);

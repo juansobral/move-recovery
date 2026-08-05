@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #000000;
+  --bg-soft: #0c0c0c;
+  --card: #121212;
+  --line: #262626;
+  --fg: #ffffff;
+  --muted: #9a9a9a;
+  --accent: #ffffff;
+  --radius: 4px;
+  --max: 1160px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-brand {
+  font-family: 'Archivo', sans-serif;
+}
+
+/* Filtro para que el iframe del mapa (fondo claro por defecto) encaje en el
+   tema oscuro — se saca en hover, igual que en el sitio original. */
+.map-iframe {
+  filter: invert(0.92) hue-rotate(180deg) grayscale(0.35) contrast(0.92);
+  transition: filter 0.35s ease;
+}
+.map-iframe:hover {
+  filter: none;
+}
