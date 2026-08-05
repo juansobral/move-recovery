@@ -138,6 +138,8 @@ export class PaymentsController {
       await this.handlePaymentWebhook(dataId);
     } else if (type === 'preapproval' || type === 'subscription_preapproval') {
       await this.handlePreapprovalWebhook(dataId);
+    } else if (type === 'subscription_authorized_payment') {
+      await this.handleAuthorizedPaymentWebhook(dataId);
     }
     // Cualquier otro topic (o uno que no reconocemos) se ignora silenciosamente
     // — MercadoPago espera un 200 igual, para no reintentar innecesariamente.
@@ -176,29 +178,29 @@ export class PaymentsController {
     }
   }
 
+  // subscription_preapproval/preapproval avisan del ciclo de vida de la
+  // suscripción (alta, cambios, baja) — NO de cada cobro mensual. Por eso este
+  // handler solo crea la suscripción y es idempotente: renovar acá extendía el
+  // período gratis en cada reintento de MercadoPago.
   private async handlePreapprovalWebhook(preapprovalId: string): Promise<void> {
     const data = await this.mercadoPago.getPreapproval(preapprovalId);
     if (data.status !== 'authorized' || !data.externalReference) return;
 
+    const existing = await this.subscriptionsService.findByPreapprovalId(preapprovalId);
+    if (existing) return; // ya existe — la creación es idempotente, la renovación va por otro topic
+
     const intent = await this.checkoutReference.verify(data.externalReference);
     if (!intent || intent.kind !== 'subscription') return;
 
-    const existing = await this.subscriptionsService.findByPreapprovalId(preapprovalId);
     const periodStart = todayStr();
     const periodEnd = addMonths(periodStart, 1);
-
-    if (existing) {
-      // Cobro recurrente de un ciclo posterior: renovar créditos.
-      await this.subscriptionsService.renewPeriod(preapprovalId, periodStart, periodEnd);
-    } else {
-      await this.subscriptionsService.createFromPreapproval({
-        userId: intent.userId,
-        plan: intent.plan,
-        mpPreapprovalId: preapprovalId,
-        periodStart,
-        periodEnd,
-      });
-    }
+    await this.subscriptionsService.createFromPreapproval({
+      userId: intent.userId,
+      plan: intent.plan,
+      mpPreapprovalId: preapprovalId,
+      periodStart,
+      periodEnd,
+    });
 
     if (intent.intendedBooking) {
       const hasCredit = await this.subscriptionsService.tryConsumeCredit(intent.userId);
@@ -220,5 +222,18 @@ export class PaymentsController {
         }
       }
     }
+  }
+
+  // Este SÍ es el topic del cobro recurrente mensual de una suscripción.
+  private async handleAuthorizedPaymentWebhook(authorizedPaymentId: string): Promise<void> {
+    const data = await this.mercadoPago.getAuthorizedPayment(authorizedPaymentId);
+    // OJO (Task 20): 'processed' es el string de éxito que asumimos para este
+    // recurso — MercadoPago no lo documenta con precisión. Hay que confirmarlo
+    // contra un cobro real en sandbox antes de confiar en esta rama.
+    if (data.status !== 'processed' || !data.preapprovalId) return;
+
+    const periodStart = todayStr();
+    const periodEnd = addMonths(periodStart, 1);
+    await this.subscriptionsService.renewPeriod(data.preapprovalId, periodStart, periodEnd);
   }
 }

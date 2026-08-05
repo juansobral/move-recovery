@@ -92,6 +92,19 @@ export class MercadoPagoService {
     await this.request(`/preapproval/${preapprovalId}`, { method: 'PUT', body: JSON.stringify({ status: 'cancelled' }) });
   }
 
+  // Cobro recurrente concreto de una suscripción (el que llega por el topic
+  // subscription_authorized_payment). OJO: a diferencia de /v1/payments/{id} y
+  // /preapproval/{id}, MercadoPago no documenta del todo esta ruta ni el shape
+  // de la respuesta — está implementada siguiendo su convención REST y debe
+  // verificarse contra un sandbox real antes de confiar en producción (Task 20).
+  async getAuthorizedPayment(authorizedPaymentId: string): Promise<{ status: string; preapprovalId: string | null }> {
+    const data = await this.request(`/authorized_payments/${authorizedPaymentId}`, { method: 'GET' });
+    return {
+      status: data.status as string,
+      preapprovalId: (data.preapproval_id as string | undefined) ?? null,
+    };
+  }
+
   async getPreapproval(preapprovalId: string): Promise<{ status: string; externalReference: string | null }> {
     const data = await this.request(`/preapproval/${preapprovalId}`, { method: 'GET' });
     return { status: data.status as string, externalReference: (data.external_reference as string | undefined) ?? null };
