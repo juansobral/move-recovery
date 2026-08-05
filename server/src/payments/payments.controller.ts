@@ -30,7 +30,14 @@ export class PaymentsController {
   async checkoutBooking(@Body() dto: CreateCheckoutDto, @CurrentUser() customer: AuthenticatedCustomer) {
     const hasCredit = await this.subscriptionsService.tryConsumeCredit(customer.id);
     if (hasCredit) {
-      return this.bookingsService.create(dto, customer.id);
+      try {
+        return await this.bookingsService.create(dto, customer.id);
+      } catch (e) {
+        // Si la reserva falla (bloque tomado, perfil incompleto) el crédito ya
+        // estaba descontado — lo devolvemos para no cobrarle una sesión que no fue.
+        await this.subscriptionsService.restoreCredit(customer.id);
+        throw e;
+      }
     }
 
     const user = await this.usersService.findById(customer.id);
@@ -191,18 +198,21 @@ export class PaymentsController {
     if (intent.intendedBooking) {
       const hasCredit = await this.subscriptionsService.tryConsumeCredit(intent.userId);
       if (hasCredit) {
-        await this.bookingsService.create(
-          {
-            date: intent.intendedBooking.date,
-            time: intent.intendedBooking.time,
-            service: intent.intendedBooking.service,
-            notes: intent.intendedBooking.notes,
-          },
-          intent.userId,
-        ).catch(() => {
-          // El horario ya no está disponible — la suscripción sigue en pie,
-          // el cliente elige otro horario con el crédito ya activado.
-        });
+        try {
+          await this.bookingsService.create(
+            {
+              date: intent.intendedBooking.date,
+              time: intent.intendedBooking.time,
+              service: intent.intendedBooking.service,
+              notes: intent.intendedBooking.notes,
+            },
+            intent.userId,
+          );
+        } catch {
+          await this.subscriptionsService.restoreCredit(intent.userId);
+          // El horario ya no está disponible — el crédito queda disponible para
+          // que el cliente elija otro.
+        }
       }
     }
   }
