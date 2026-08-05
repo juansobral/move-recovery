@@ -1,4 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Booking } from '../bookings/entities/booking.entity';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { CompleteProfileDto } from './dto/complete-profile.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
@@ -12,6 +15,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly googleVerifier: GoogleTokenVerifierService,
+    @InjectRepository(Booking) private readonly bookingsRepo: Repository<Booking>,
   ) {}
 
   @Post('auth/google')
@@ -33,5 +37,11 @@ export class UsersController {
   async completeProfile(@CurrentUser() customer: AuthenticatedCustomer, @Body() dto: CompleteProfileDto) {
     const user = await this.usersService.completePhone(customer.id, dto.phone);
     return { id: user.id, email: user.email, name: user.name, phone: user.phone, avatarUrl: user.avatarUrl };
+  }
+
+  @Get('me/bookings')
+  @UseGuards(UserJwtAuthGuard)
+  getMyBookings(@CurrentUser() customer: AuthenticatedCustomer) {
+    return this.bookingsRepo.find({ where: { userId: customer.id }, order: { date: 'DESC', time: 'DESC' } });
   }
 }
