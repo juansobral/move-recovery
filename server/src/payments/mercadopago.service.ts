@@ -109,4 +109,21 @@ export class MercadoPagoService {
     const data = await this.request(`/preapproval/${preapprovalId}`, { method: 'GET' });
     return { status: data.status as string, externalReference: (data.external_reference as string | undefined) ?? null };
   }
+
+  // En sandbox con usuarios de prueba, Checkout Pro a veces no manda el webhook
+  // de topic "payment" y solo notifica el "merchant_order" asociado a la
+  // preferencia — este método deja buscar los pagos de esa orden a mano.
+  async getMerchantOrder(merchantOrderId: string): Promise<{ externalReference: string | null; payments: MpPayment[] }> {
+    const data = await this.request(`/merchant_orders/${merchantOrderId}`, { method: 'GET' });
+    const externalReference = (data.external_reference as string | undefined) ?? null;
+    const payments = Array.isArray(data.payments) ? (data.payments as Record<string, unknown>[]) : [];
+    return {
+      externalReference,
+      payments: payments.map((p) => ({
+        id: p.id as number,
+        status: p.status as string,
+        externalReference,
+      })),
+    };
+  }
 }

@@ -23,7 +23,7 @@ import { UsersService } from '../users/users.service';
 import { CheckoutReferenceService } from './checkout-reference.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { CreateSubscriptionCheckoutDto } from './dto/create-subscription-checkout.dto';
-import { MercadoPagoService } from './mercadopago.service';
+import { MercadoPagoService, MpPayment } from './mercadopago.service';
 import { verifyWebhookSignature } from './webhook-signature.util';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { addMonths, todayStr } from '../common/date.util';
@@ -144,12 +144,14 @@ export class PaymentsController {
     @Query('data.id') dataId: string,
     @Headers('x-signature') xSignature: string,
     @Headers('x-request-id') xRequestId: string,
+    @Body() body: Record<string, unknown>,
   ) {
     const secret = this.config.get<string>('MP_WEBHOOK_SECRET');
     if (!secret) throw new Error('Falta MP_WEBHOOK_SECRET.');
 
     this.logger.log(
-      `Webhook recibido: type=${type} dataId=${dataId ?? ''} xSignature=${xSignature ?? ''} xRequestId=${xRequestId ?? ''}`,
+      `Webhook recibido: type=${type} dataId=${dataId ?? ''} xSignature=${xSignature ?? ''} xRequestId=${xRequestId ?? ''} ` +
+        `body.action=${body?.action ?? ''} body.liveMode=${body?.live_mode ?? ''} body.userId=${body?.user_id ?? ''}`,
     );
 
     const validSignature = verifyWebhookSignature({ xSignature: xSignature ?? '', xRequestId: xRequestId ?? '', dataId: dataId ?? '', secret });
@@ -160,6 +162,8 @@ export class PaymentsController {
 
     if (type === 'payment') {
       await this.handlePaymentWebhook(dataId);
+    } else if (type === 'merchant_order' || type === 'topic_merchant_order_wh') {
+      await this.handleMerchantOrderWebhook(dataId);
     } else if (type === 'preapproval' || type === 'subscription_preapproval') {
       await this.handlePreapprovalWebhook(dataId);
     } else if (type === 'subscription_authorized_payment') {
@@ -172,8 +176,41 @@ export class PaymentsController {
   }
 
   private async handlePaymentWebhook(paymentId: string): Promise<void> {
-    const payment = await this.mercadoPago.getPayment(paymentId);
-    this.logger.log(`Pago ${paymentId}: status=${payment.status} externalReference=${payment.externalReference ?? 'null'}`);
+    let payment: MpPayment;
+    try {
+      payment = await this.mercadoPago.getPayment(paymentId);
+    } catch (e) {
+      // Pasa, por ejemplo, cuando el pago es de una cuenta/ambiente distinto al
+      // del MP_ACCESS_TOKEN configurado (ej. live_mode real contra credenciales
+      // de prueba) — la API de MercadoPago devuelve 404/401 y antes esto se
+      // caía como un 500 sin ninguna pista de la causa.
+      this.logger.error(`No se pudo obtener el pago ${paymentId} desde MercadoPago: ${e instanceof Error ? e.message : e}`);
+      throw e;
+    }
+    await this.processApprovedPayment(payment);
+  }
+
+  // En sandbox con usuarios de prueba, Checkout Pro a veces nunca manda el
+  // webhook de topic "payment" — solo el de "merchant_order" — así que hay que
+  // ir a buscar los pagos de la orden a mano y procesarlos igual.
+  private async handleMerchantOrderWebhook(merchantOrderId: string): Promise<void> {
+    let order: { externalReference: string | null; payments: MpPayment[] };
+    try {
+      order = await this.mercadoPago.getMerchantOrder(merchantOrderId);
+    } catch (e) {
+      this.logger.error(`No se pudo obtener la orden ${merchantOrderId} desde MercadoPago: ${e instanceof Error ? e.message : e}`);
+      throw e;
+    }
+    this.logger.log(
+      `Orden ${merchantOrderId}: externalReference=${order.externalReference ?? 'null'} pagos=[${order.payments.map((p) => `${p.id}:${p.status}`).join(', ')}]`,
+    );
+    for (const payment of order.payments) {
+      await this.processApprovedPayment(payment);
+    }
+  }
+
+  private async processApprovedPayment(payment: MpPayment): Promise<void> {
+    this.logger.log(`Pago ${payment.id}: status=${payment.status} externalReference=${payment.externalReference ?? 'null'}`);
     if (payment.status !== 'approved' || !payment.externalReference) return;
 
     // MercadoPago reintenta las notificaciones (y manda payment.created y
