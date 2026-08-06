@@ -1,10 +1,9 @@
 {
-  "cleanUrls": true,
   "trailingSlash": false,
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index" },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
