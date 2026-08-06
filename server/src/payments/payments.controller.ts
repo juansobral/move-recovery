@@ -7,6 +7,7 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
   Query,
   UnauthorizedException,
@@ -29,6 +30,8 @@ import { addMonths, todayStr } from '../common/date.util';
 
 @Controller()
 export class PaymentsController {
+  private readonly logger = new Logger(PaymentsController.name);
+
   constructor(
     private readonly bookingsService: BookingsService,
     private readonly subscriptionsService: SubscriptionsService,
@@ -187,7 +190,19 @@ export class PaymentsController {
         // o el intent quedó inválido (ej. fecha pasada, perfil incompleto) —
         // en ningún caso un reintento de MercadoPago va a lograr crear la
         // reserva, así que reembolsamos en vez de dejar cobrado sin turno.
-        await this.mercadoPago.refundPayment(String(payment.id));
+        try {
+          await this.mercadoPago.refundPayment(String(payment.id));
+        } catch (refundError) {
+          // El pago quedó cobrado sin reserva y el reembolso automático
+          // también falló (ej. la cuenta de prueba de MercadoPago no puede
+          // reembolsar vía API) — no relanzamos: reintentar el webhook no va
+          // a lograr ni crear la reserva ni reembolsar solo, y antes esto
+          // tumbaba el webhook entero con un 500. Queda logueado para
+          // reembolsar a mano desde el dashboard de MercadoPago.
+          this.logger.error(
+            `Reembolso automático falló para el pago ${payment.id} (reserva rechazada: ${e.message}): ${refundError instanceof Error ? refundError.message : refundError}`,
+          );
+        }
       } else {
         throw e; // error transitorio (ej. DB caída) — dejamos que MercadoPago reintente el webhook
       }
