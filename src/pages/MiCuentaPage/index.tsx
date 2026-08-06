@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useGetMeQuery, useGetMyBookingsQuery, useGetMySubscriptionQuery } from '../../features/api/userApi';
+import { loggedOut } from '../../features/userAuth/userAuthSlice';
 import { fechaCorta, todayStr } from '../../lib/dateUtils';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useAppDispatch } from '../../store/hooks';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
@@ -9,6 +12,7 @@ import { CancelSubscriptionDialog } from '../../components/account/CancelSubscri
 
 export const MiCuentaPage = (): JSX.Element => {
   useDocumentTitle('Mi cuenta · MOVE®');
+  const dispatch = useAppDispatch();
   const { data: me } = useGetMeQuery();
   const { data: bookings = [] } = useGetMyBookingsQuery();
   const { data: subscription } = useGetMySubscriptionQuery();
@@ -24,9 +28,19 @@ export const MiCuentaPage = (): JSX.Element => {
 
   return (
     <div className="mx-auto max-w-site space-y-8 px-8 py-12 max-md:px-5">
-      <div>
-        <h1 className="font-heading text-2xl uppercase tracking-wide">Hola, {me?.name?.split(' ')[0]}</h1>
-        <p className="text-sm text-muted-foreground">{me?.email}</p>
+      <div className="flex items-start justify-between gap-4 max-md:flex-col">
+        <div>
+          <h1 className="font-heading text-2xl uppercase tracking-wide">Hola, {me?.name?.split(' ')[0]}</h1>
+          <p className="text-sm text-muted-foreground">{me?.email}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/">Volver al inicio</Link>
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => dispatch(loggedOut())}>
+            Cerrar sesión
+          </Button>
+        </div>
       </div>
 
       <Card className="p-6">
