@@ -2,20 +2,22 @@
 // vercel.json). Arranca Nest una sola vez por contenedor "tibio" y reutiliza
 // esa instancia (y su pool de conexiones) en cada invocación siguiente.
 //
-// Extensión .cjs a propósito: la raíz del repo tiene "type": "module" en
-// package.json (lo necesita el build de Vite), así que un .js acá se trata
-// como ES module y `module.exports`/`require` rompen en runtime — .cjs
-// fuerza CommonJS sin importar el "type" del package.json.
+// ESM a propósito: la raíz del repo tiene "type": "module" en package.json
+// (lo necesita el build de Vite) — Vercel solo reconoce .js/.ts/.mjs como
+// función serverless (.cjs no está soportado), así que este archivo tiene
+// que ser un ES module de verdad, no CommonJS con extensión .js.
+import { bootstrap } from '../server/dist/bootstrap.js';
+
 let cachedHandlerPromise;
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (!cachedHandlerPromise) {
-    cachedHandlerPromise = require('../server/dist/bootstrap').bootstrap();
+    cachedHandlerPromise = bootstrap();
   }
   const handler = await cachedHandlerPromise;
   return handler(req, res);
-};
+}
 
 // Nest necesita el body sin parsear para poder parsearlo una sola vez —
 // si Vercel también lo consume, POST/DELETE quedan con body vacío.
-module.exports.config = { api: { bodyParser: false } };
+export const config = { api: { bodyParser: false } };
