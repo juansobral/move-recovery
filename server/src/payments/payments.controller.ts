@@ -148,8 +148,15 @@ export class PaymentsController {
     const secret = this.config.get<string>('MP_WEBHOOK_SECRET');
     if (!secret) throw new Error('Falta MP_WEBHOOK_SECRET.');
 
+    this.logger.log(
+      `Webhook recibido: type=${type} dataId=${dataId ?? ''} xSignature=${xSignature ?? ''} xRequestId=${xRequestId ?? ''}`,
+    );
+
     const validSignature = verifyWebhookSignature({ xSignature: xSignature ?? '', xRequestId: xRequestId ?? '', dataId: dataId ?? '', secret });
-    if (!validSignature) throw new UnauthorizedException('Firma inválida.');
+    if (!validSignature) {
+      this.logger.warn(`Firma de webhook inválida: type=${type} dataId=${dataId ?? ''} (ver detalle en [mp-webhook] arriba)`);
+      throw new UnauthorizedException('Firma inválida.');
+    }
 
     if (type === 'payment') {
       await this.handlePaymentWebhook(dataId);
@@ -166,6 +173,7 @@ export class PaymentsController {
 
   private async handlePaymentWebhook(paymentId: string): Promise<void> {
     const payment = await this.mercadoPago.getPayment(paymentId);
+    this.logger.log(`Pago ${paymentId}: status=${payment.status} externalReference=${payment.externalReference ?? 'null'}`);
     if (payment.status !== 'approved' || !payment.externalReference) return;
 
     // MercadoPago reintenta las notificaciones (y manda payment.created y
@@ -173,17 +181,26 @@ export class PaymentsController {
     // Sin esto, la segunda entrega chocaba contra UNIQUE(date, time) y terminaba
     // reembolsando una reserva legítima ya confirmada.
     const alreadyProcessed = await this.bookingsService.findByMpPaymentId(String(payment.id));
-    if (alreadyProcessed) return;
+    if (alreadyProcessed) {
+      this.logger.log(`Pago ${payment.id} ya procesado (reserva ${alreadyProcessed.id}) — se ignora reintento.`);
+      return;
+    }
 
     const intent = await this.checkoutReference.verify(payment.externalReference);
-    if (!intent || intent.kind !== 'oneoff') return;
+    if (!intent || intent.kind !== 'oneoff') {
+      this.logger.warn(
+        `Pago ${payment.id}: referencia ${payment.externalReference} sin intent "oneoff" válido (encontrado=${intent ? intent.kind : 'null'}).`,
+      );
+      return;
+    }
 
     try {
-      await this.bookingsService.create(
+      const booking = await this.bookingsService.create(
         { date: intent.date, time: intent.time, service: intent.service, notes: intent.notes },
         intent.userId,
         String(payment.id),
       );
+      this.logger.log(`Pago ${payment.id}: reserva ${booking.id} creada (${intent.date} ${intent.time}).`);
     } catch (e) {
       if (e instanceof ConflictException || e instanceof BadRequestException) {
         // Falla permanente: el bloque ya no está disponible (ConflictException)
