@@ -7,6 +7,7 @@ export interface Booking {
   phone: string;
   service: string;
   notes: string | null;
+  mpPaymentId: string | null;
   createdAt: string;
 }
 

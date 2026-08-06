@@ -1,6 +1,7 @@
 export interface Subscription {
   plan: 'standard' | 'premium';
   status: 'authorized' | 'cancelled';
+  currentPeriodStart: string;
   currentPeriodEnd: string;
   sessionCreditsRemaining: number;
   sessionCreditsTotal: number;

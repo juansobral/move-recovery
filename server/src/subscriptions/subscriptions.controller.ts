@@ -20,6 +20,7 @@ export class SubscriptionsController {
     return {
       plan: subscription.plan,
       status: subscription.status,
+      currentPeriodStart: subscription.currentPeriodStart,
       currentPeriodEnd: subscription.currentPeriodEnd,
       sessionCreditsRemaining: subscription.sessionCreditsRemaining,
       sessionCreditsTotal: subscription.sessionCreditsTotal,

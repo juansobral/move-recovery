@@ -5,6 +5,7 @@ import { loggedOut } from '../../features/userAuth/userAuthSlice';
 import { fechaCorta, todayStr } from '../../lib/dateUtils';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useAppDispatch } from '../../store/hooks';
+import type { Booking } from '../../types/booking.types';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
@@ -25,6 +26,23 @@ export const MiCuentaPage = (): JSX.Element => {
       past: bookings.filter((b) => b.date < hoy).sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`)),
     };
   }, [bookings]);
+
+  // Reservas pagadas (mpPaymentId) vs. reclamadas con un crédito del plan —
+  // a estas últimas se les numera según el orden cronológico dentro del
+  // ciclo de facturación vigente (los créditos se resetean cada ciclo).
+  const sessionLabelById = useMemo(() => {
+    const labels = new Map<number, string>();
+    bookings
+      .filter((b) => !b.mpPaymentId && (!subscription || b.date >= subscription.currentPeriodStart))
+      .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+      .forEach((b, i) => labels.set(b.id, `Sesión ${i + 1} del plan`));
+    return labels;
+  }, [bookings, subscription]);
+
+  const bookingBadge = (b: Booking): string | null => {
+    if (b.mpPaymentId) return 'Pagada';
+    return sessionLabelById.get(b.id) ?? null;
+  };
 
   return (
     <div className="mx-auto max-w-site space-y-8 px-8 py-12 max-md:px-5">
@@ -78,7 +96,7 @@ export const MiCuentaPage = (): JSX.Element => {
                 <p>{fechaCorta(b.date)} · {b.time} h</p>
                 <p className="text-xs text-muted-foreground">{b.service}</p>
               </div>
-              <Badge>{b.service}</Badge>
+              {bookingBadge(b) && <Badge highlighted={Boolean(b.mpPaymentId)}>{bookingBadge(b)}</Badge>}
             </Card>
           ))}
         </div>
@@ -94,6 +112,7 @@ export const MiCuentaPage = (): JSX.Element => {
                 <p>{fechaCorta(b.date)} · {b.time} h</p>
                 <p className="text-xs text-muted-foreground">{b.service}</p>
               </div>
+              {bookingBadge(b) && <Badge highlighted={Boolean(b.mpPaymentId)}>{bookingBadge(b)}</Badge>}
             </Card>
           ))}
         </div>
