@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
+import { todayStr } from '../common/date.util';
+import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { User } from './entities/user.entity';
 import { GoogleProfile } from './google-token-verifier.service';
 
@@ -10,10 +12,22 @@ export interface GoogleLoginResult {
   profileComplete: boolean;
 }
 
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  name: string;
+  phone: string | null;
+  isSocio: boolean;
+  createdAt: Date;
+  plan: 'standard' | 'premium' | null;
+  planStatus: 'authorized' | 'cancelled' | null;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
+    @InjectRepository(Subscription) private readonly subscriptionsRepo: Repository<Subscription>,
     private readonly jwt: JwtService,
   ) {}
 
@@ -58,8 +72,34 @@ export class UsersService {
     return this.usersRepo.save(user);
   }
 
-  findAll(): Promise<User[]> {
-    return this.usersRepo.find({ order: { createdAt: 'DESC' } });
+  async findAll(): Promise<AdminUserListItem[]> {
+    const users = await this.usersRepo.find({ order: { createdAt: 'DESC' } });
+    const subscriptions = await this.subscriptionsRepo.find({ order: { createdAt: 'DESC' } });
+
+    // Igual que SubscriptionsService.findCurrent (fila más reciente con
+    // currentPeriodEnd >= hoy) pero para todos los usuarios en una sola
+    // consulta en vez de N+1 — subscriptions ya viene ordenado DESC, así que
+    // la primera fila vista por usuario es la más reciente.
+    const today = todayStr();
+    const currentByUser = new Map<string, Subscription>();
+    for (const sub of subscriptions) {
+      if (sub.currentPeriodEnd < today) continue;
+      if (!currentByUser.has(sub.userId)) currentByUser.set(sub.userId, sub);
+    }
+
+    return users.map((u) => {
+      const current = currentByUser.get(u.id);
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        phone: u.phone,
+        isSocio: u.isSocio,
+        createdAt: u.createdAt,
+        plan: current?.plan ?? null,
+        planStatus: current?.status ?? null,
+      };
+    });
   }
 
   async setSocio(id: string, isSocio: boolean): Promise<User> {

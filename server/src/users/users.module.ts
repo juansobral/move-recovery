@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { Booking } from '../bookings/entities/booking.entity';
+import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { User } from './entities/user.entity';
 import { AdminUsersController } from './admin-users.controller';
 import { googleOAuthClientProvider } from './google-oauth-client.provider';
@@ -15,7 +16,7 @@ import { UsersService } from './users.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Booking]),
+    TypeOrmModule.forFeature([User, Booking, Subscription]),
     PassportModule,
     // El orden acá importa: JwtModule (USER_JWT_SECRET) tiene que ir antes que AuthModule
     // (que exporta su propio JwtModule con JWT_SECRET) — si se invierte, UsersService
