@@ -128,7 +128,15 @@ export class PaymentsController {
       return booking ? { status: 'completed', booking } : { status: 'pending' };
     }
 
-    const subscription = await this.subscriptionsService.findCurrent(customer.id);
+    let subscription = await this.subscriptionsService.findCurrent(customer.id);
+    if (!subscription) {
+      // El webhook de "preapproval" puede no llegar nunca en sandbox con
+      // usuarios de prueba, aún con el evento de Suscripciones tildado —
+      // antes de resignarnos a "pending", le preguntamos directo a
+      // MercadoPago si ya la autorizó.
+      await this.reconcilePreapproval(ref);
+      subscription = await this.subscriptionsService.findCurrent(customer.id);
+    }
     if (!subscription) return { status: 'pending' };
 
     if (!intent.intendedBooking) return { status: 'completed', booking: null };
@@ -269,12 +277,31 @@ export class PaymentsController {
   // período gratis en cada reintento de MercadoPago.
   private async handlePreapprovalWebhook(preapprovalId: string): Promise<void> {
     const data = await this.mercadoPago.getPreapproval(preapprovalId);
-    if (data.status !== 'authorized' || !data.externalReference) return;
+    this.logger.log(`Preapproval ${preapprovalId}: status=${data.status} externalReference=${data.externalReference ?? 'null'}`);
+    await this.processAuthorizedPreapproval(preapprovalId, data.status, data.externalReference);
+  }
+
+  // Fallback llamado desde checkoutStatus cuando el webhook de preapproval
+  // nunca llegó — consulta MercadoPago directo por la referencia y procesa la
+  // suscripción con la misma lógica que usaría el webhook si hubiera llegado.
+  private async reconcilePreapproval(reference: string): Promise<void> {
+    try {
+      const found = await this.mercadoPago.searchPreapprovalByReference(reference);
+      if (!found) return;
+      this.logger.log(`Reconciliación manual: preapproval ${found.id} (ref ${reference}) status=${found.status}`);
+      await this.processAuthorizedPreapproval(found.id, found.status, reference);
+    } catch (e) {
+      this.logger.error(`Falló la reconciliación manual de preapproval para ref ${reference}: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+
+  private async processAuthorizedPreapproval(preapprovalId: string, status: string, externalReference: string | null): Promise<void> {
+    if (status !== 'authorized' || !externalReference) return;
 
     const existing = await this.subscriptionsService.findByPreapprovalId(preapprovalId);
     if (existing) return; // ya existe — la creación es idempotente, la renovación va por otro topic
 
-    const intent = await this.checkoutReference.verify(data.externalReference);
+    const intent = await this.checkoutReference.verify(externalReference);
     if (!intent || intent.kind !== 'subscription') return;
 
     const periodStart = todayStr();

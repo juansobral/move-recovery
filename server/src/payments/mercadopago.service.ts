@@ -110,6 +110,17 @@ export class MercadoPagoService {
     return { status: data.status as string, externalReference: (data.external_reference as string | undefined) ?? null };
   }
 
+  // Fallback para cuando el webhook de "preapproval" nunca llega (visto en
+  // sandbox con usuarios de prueba, incluso con el evento "Suscripciones"
+  // tildado) — le preguntamos directo a MercadoPago si ya la autorizó.
+  async searchPreapprovalByReference(externalReference: string): Promise<{ id: string; status: string } | null> {
+    const data = await this.request(`/preapproval/search?external_reference=${encodeURIComponent(externalReference)}`, { method: 'GET' });
+    const results = Array.isArray(data.results) ? (data.results as Record<string, unknown>[]) : [];
+    if (results.length === 0) return null;
+    const match = results.find((r) => r.status === 'authorized') ?? results[0];
+    return { id: String(match.id), status: match.status as string };
+  }
+
   // En sandbox con usuarios de prueba, Checkout Pro a veces no manda el webhook
   // de topic "payment" y solo notifica el "merchant_order" asociado a la
   // preferencia — este método deja buscar los pagos de esa orden a mano.
