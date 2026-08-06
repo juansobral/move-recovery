@@ -24,6 +24,7 @@ export const BookingSection = (): JSX.Element => {
     subscribeAndBook,
     hasCredits,
     hasActivePlan,
+    isSocio,
     isSubmitting,
   } = useBookingFlow();
 
@@ -59,7 +60,7 @@ export const BookingSection = (): JSX.Element => {
           <BookingForm date={date} selectedTime={selectedTime} isSubmitting={isSubmitting} onSubmit={submitBooking} />
         ) : (
           <PaymentChoice
-            resetSessionPrice={600}
+            isSocio={isSocio}
             hasActivePlan={hasActivePlan}
             onPayOneOff={(notes) => submitBooking({ notes })}
             onSubscribe={subscribeAndBook}

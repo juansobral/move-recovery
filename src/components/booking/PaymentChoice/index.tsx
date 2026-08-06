@@ -3,14 +3,26 @@ import { extractApiErrorMessage } from '../../../lib/apiError';
 import { Button } from '../../ui/button';
 import { Textarea } from '../../ui/textarea';
 
+// Mirror de server/src/catalog/catalog.constants.ts (RESET_SESSION_PRICE/PLANS)
+// — el precio real cobrado siempre se calcula en el servidor, esto es solo
+// para mostrar el monto correcto antes de que el cliente haga click.
+const RESET_SESSION_PRICE = { regular: 600, socio: 300 };
+const PLAN_PRICES = {
+  standard: { regular: 2400, socio: 1200 },
+  premium: { regular: 3840, socio: 1920 },
+};
+
 interface PaymentChoiceProps {
-  resetSessionPrice: number;
+  isSocio: boolean;
   hasActivePlan: boolean;
   onPayOneOff: (notes: string) => Promise<unknown>;
   onSubscribe: (plan: 'standard' | 'premium', notes: string) => Promise<void>;
 }
 
-export const PaymentChoice = ({ resetSessionPrice, hasActivePlan, onPayOneOff, onSubscribe }: PaymentChoiceProps): JSX.Element => {
+export const PaymentChoice = ({ isSocio, hasActivePlan, onPayOneOff, onSubscribe }: PaymentChoiceProps): JSX.Element => {
+  const resetSessionPrice = isSocio ? RESET_SESSION_PRICE.socio : RESET_SESSION_PRICE.regular;
+  const standardPrice = isSocio ? PLAN_PRICES.standard.socio : PLAN_PRICES.standard.regular;
+  const premiumPrice = isSocio ? PLAN_PRICES.premium.socio : PLAN_PRICES.premium.regular;
   const [isLoading, setIsLoading] = useState<'oneoff' | 'standard' | 'premium' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -58,7 +70,7 @@ export const PaymentChoice = ({ resetSessionPrice, hasActivePlan, onPayOneOff, o
             disabled={isLoading !== null}
             onClick={() => run('standard', () => onSubscribe('standard', notes))}
           >
-            {isLoading === 'standard' ? 'Redirigiendo…' : 'Suscribirme a Standard Reset ($2400/mes · 4 sesiones)'}
+            {isLoading === 'standard' ? 'Redirigiendo…' : `Suscribirme a Standard Reset ($${standardPrice}/mes · 4 sesiones)`}
           </Button>
           <Button
             type="button"
@@ -67,7 +79,7 @@ export const PaymentChoice = ({ resetSessionPrice, hasActivePlan, onPayOneOff, o
             disabled={isLoading !== null}
             onClick={() => run('premium', () => onSubscribe('premium', notes))}
           >
-            {isLoading === 'premium' ? 'Redirigiendo…' : 'Suscribirme a Premium Reset ($3840/mes · 8 sesiones)'}
+            {isLoading === 'premium' ? 'Redirigiendo…' : `Suscribirme a Premium Reset ($${premiumPrice}/mes · 8 sesiones)`}
           </Button>
         </>
       )}

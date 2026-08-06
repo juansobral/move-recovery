@@ -4,6 +4,7 @@ import { useGetConfigQuery } from '../features/api/configApi';
 import {
   useCreateBookingCheckoutMutation,
   useCreateSubscriptionCheckoutMutation,
+  useGetMeQuery,
   useGetMySubscriptionQuery,
 } from '../features/api/userApi';
 import { selectIsCustomerAuthenticated } from '../features/userAuth/userAuthSlice';
@@ -22,6 +23,7 @@ export function useBookingFlow() {
   const { data: config } = useGetConfigQuery();
   const { data: availability, isFetching: isLoadingSlots } = useGetAvailabilityQuery(date, { skip: !date });
   const { data: subscription } = useGetMySubscriptionQuery(undefined, { skip: !isAuthenticated });
+  const { data: me } = useGetMeQuery(undefined, { skip: !isAuthenticated });
   const [createBookingCheckout, { isLoading: isSubmitting }] = useCreateBookingCheckoutMutation();
   const [createSubscriptionCheckout] = useCreateSubscriptionCheckoutMutation();
 
@@ -73,6 +75,7 @@ export function useBookingFlow() {
     subscribeAndBook,
     hasCredits,
     hasActivePlan,
+    isSocio: me?.isSocio ?? false,
     isSubmitting,
   };
 }

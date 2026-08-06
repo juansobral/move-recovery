@@ -29,14 +29,14 @@ export class UsersController {
   @UseGuards(UserJwtAuthGuard)
   async me(@CurrentUser() customer: AuthenticatedCustomer) {
     const user = await this.usersService.findById(customer.id);
-    return { id: user!.id, email: user!.email, name: user!.name, phone: user!.phone, avatarUrl: user!.avatarUrl };
+    return { id: user!.id, email: user!.email, name: user!.name, phone: user!.phone, avatarUrl: user!.avatarUrl, isSocio: user!.isSocio };
   }
 
   @Patch('me')
   @UseGuards(UserJwtAuthGuard)
   async completeProfile(@CurrentUser() customer: AuthenticatedCustomer, @Body() dto: CompleteProfileDto) {
     const user = await this.usersService.completePhone(customer.id, dto.phone);
-    return { id: user.id, email: user.email, name: user.name, phone: user.phone, avatarUrl: user.avatarUrl };
+    return { id: user.id, email: user.email, name: user.name, phone: user.phone, avatarUrl: user.avatarUrl, isSocio: user.isSocio };
   }
 
   @Get('me/bookings')
