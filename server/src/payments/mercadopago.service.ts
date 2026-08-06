@@ -113,11 +113,14 @@ export class MercadoPagoService {
   // Fallback para cuando el webhook de "preapproval" nunca llega (visto en
   // sandbox con usuarios de prueba, incluso con el evento "Suscripciones"
   // tildado) — le preguntamos directo a MercadoPago si ya la autorizó.
-  async searchPreapprovalByReference(externalReference: string): Promise<{ id: string; status: string } | null> {
-    const data = await this.request(`/preapproval/search?external_reference=${encodeURIComponent(externalReference)}`, { method: 'GET' });
+  // OJO: /preapproval/search no admite filtrar por external_reference (solo
+  // q/payer_id/payer_email/preapproval_plan_id) — buscamos por payer_email y
+  // filtramos el external_reference a mano entre los resultados.
+  async searchPreapprovalByReference(payerEmail: string, externalReference: string): Promise<{ id: string; status: string } | null> {
+    const data = await this.request(`/preapproval/search?payer_email=${encodeURIComponent(payerEmail)}`, { method: 'GET' });
     const results = Array.isArray(data.results) ? (data.results as Record<string, unknown>[]) : [];
-    if (results.length === 0) return null;
-    const match = results.find((r) => r.status === 'authorized') ?? results[0];
+    const match = results.find((r) => r.external_reference === externalReference);
+    if (!match) return null;
     return { id: String(match.id), status: match.status as string };
   }
 
