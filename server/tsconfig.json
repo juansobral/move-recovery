@@ -19,6 +19,13 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    // Sin esto, tsc camina hacia arriba por node_modules/@types buscando
+    // tipos implícitos — y si este repo corre en un git worktree (como en
+    // subagent-driven-development), termina encontrando el @types del
+    // checkout principal TAMBIÉN, duplicado, y falla con "Cannot find type
+    // definition file for 'X 2'". Se limita la búsqueda a los dos @types
+    // reales de este workspace (el propio de server/ y el hoisteado a la raíz).
+    "typeRoots": ["./node_modules/@types", "../node_modules/@types"]
   }
 }

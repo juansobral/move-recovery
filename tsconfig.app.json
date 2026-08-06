@@ -19,7 +19,15 @@
     "noFallthroughCasesInSwitch": true,
 
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] }
+    "paths": { "@/*": ["./src/*"] },
+
+    // Sin esto, tsc camina hacia arriba por node_modules/@types buscando
+    // tipos implícitos — y si este repo corre en un git worktree (como en
+    // subagent-driven-development), termina encontrando el @types del
+    // checkout principal TAMBIÉN, duplicado, y falla con "Cannot find type
+    // definition file for 'X 2'". Se limita la búsqueda al @types real de
+    // este workspace.
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": ["src"]
 }

@@ -7,6 +7,8 @@ export interface AdminUser {
   phone: string | null;
   isSocio: boolean;
   createdAt: string;
+  plan: 'standard' | 'premium' | null;
+  planStatus: 'authorized' | 'cancelled' | null;
 }
 
 export const adminUsersApi = baseApi.injectEndpoints({

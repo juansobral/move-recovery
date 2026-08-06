@@ -13,5 +13,6 @@ import { Booking } from './entities/booking.entity';
   imports: [TypeOrmModule.forFeature([Booking, User]), MailModule, AuthModule, UsersModule],
   controllers: [BookingsController, AvailabilityController],
   providers: [BookingsService],
+  exports: [BookingsService],
 })
 export class BookingsModule {}

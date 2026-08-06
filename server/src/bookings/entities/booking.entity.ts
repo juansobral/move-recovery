@@ -40,6 +40,9 @@ export class Booking {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @Column({ name: 'mp_payment_id', type: 'text', nullable: true })
+  mpPaymentId: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }

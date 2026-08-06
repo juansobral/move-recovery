@@ -31,6 +31,8 @@ export class DiagService {
       SITE_URL: this.config.get<string>('SITE_URL'),
       GOOGLE_CLIENT_ID: this.config.get<string>('GOOGLE_CLIENT_ID'),
       USER_JWT_SECRET: this.config.get<string>('USER_JWT_SECRET'),
+      MP_ACCESS_TOKEN: this.config.get<string>('MP_ACCESS_TOKEN'),
+      MP_WEBHOOK_SECRET: this.config.get<string>('MP_WEBHOOK_SECRET'),
     };
 
     const out: DiagResponse = {
@@ -50,7 +52,7 @@ export class DiagService {
 
     /* ---------------- Variables de entorno ---------------- */
     for (const [k, v] of Object.entries(env)) {
-      out.variables[k] = v ? (k.includes('KEY') || k === 'DATABASE_URL' || k === 'JWT_SECRET' || k === 'USER_JWT_SECRET' ? `configurada (${pista(v)})` : v) : 'FALTA';
+      out.variables[k] = v ? (k.includes('KEY') || k === 'DATABASE_URL' || k === 'JWT_SECRET' || k === 'USER_JWT_SECRET' || k === 'MP_ACCESS_TOKEN' || k === 'MP_WEBHOOK_SECRET' ? `configurada (${pista(v)})` : v) : 'FALTA';
     }
 
     if (!env.DATABASE_URL) out.problemas.push('Falta DATABASE_URL: no se pueden guardar reservas.');

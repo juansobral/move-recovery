@@ -10,7 +10,7 @@ describe('UsersService.upsertFromGoogleProfile', () => {
       save: jest.fn(async (data) => ({ id: 'u-1', phone: null, ...data })),
     };
     const jwt = { signAsync: jest.fn(async () => 'signed-token') };
-    return { service: new UsersService(repo as never, jwt as never), repo };
+    return { service: new UsersService(repo as never, {} as never, jwt as never), repo };
   };
 
   it('creates a new user when no match exists by googleId or email', async () => {
@@ -51,7 +51,7 @@ describe('UsersService.loginWithGoogle', () => {
   it('reports profileComplete=false when the user has no phone yet', async () => {
     const repo = { findOne: jest.fn().mockResolvedValue(null), create: jest.fn((d) => d), save: jest.fn(async (d) => ({ id: 'u-1', phone: null, ...d })) };
     const jwt = { signAsync: jest.fn(async () => 'signed-token') };
-    const service = new UsersService(repo as never, jwt as never);
+    const service = new UsersService(repo as never, {} as never, jwt as never);
 
     const result = await service.loginWithGoogle(profile);
 
@@ -62,7 +62,7 @@ describe('UsersService.loginWithGoogle', () => {
     const existing = { id: 'u-1', googleId: 'g-1', email: 'ana@example.com', phone: '099123456' };
     const repo = { findOne: jest.fn().mockResolvedValue(existing), create: jest.fn(), save: jest.fn() };
     const jwt = { signAsync: jest.fn(async () => 'signed-token') };
-    const service = new UsersService(repo as never, jwt as never);
+    const service = new UsersService(repo as never, {} as never, jwt as never);
 
     const result = await service.loginWithGoogle(profile);
 

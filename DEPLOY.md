@@ -84,6 +84,8 @@ En Vercel, entrá a tu proyecto → **Settings → Environment Variables** y agr
 | `SITE_URL` | la URL pública, ej. `https://move-recovery.vercel.app` (sin `/` al final) | links dentro de los emails |
 | `GOOGLE_CLIENT_ID` | el Client ID de un "OAuth 2.0 Client ID" tipo Web application en Google Cloud Console | verificar el idToken de Google en el login de clientes |
 | `USER_JWT_SECRET` | una clave inventada por vos, larga y aleatoria (separada de `JWT_SECRET` a propósito — los dos tipos de token nunca deben ser intercambiables) | firmar las sesiones de clientes (`/mi-cuenta`, reservas) |
+| `MP_ACCESS_TOKEN` | el access token de tu aplicación en MercadoPago | procesar pagos con MercadoPago |
+| `MP_WEBHOOK_SECRET` | la clave secreta para validar webhooks de MercadoPago | autenticar notificaciones de pago desde MercadoPago |
 | `VITE_GOOGLE_CLIENT_ID` | el mismo valor que `GOOGLE_CLIENT_ID` (los Client ID de Google no son secretos, están pensados para ir en código de cliente) | mostrar el botón de Google Sign-In en el front |
 
 > `VITE_GOOGLE_CLIENT_ID` se incorpora al bundle del front **en tiempo de build** (Vite la reemplaza al compilar) — a diferencia de las variables server-only de arriba, que se leen en runtime, esta tiene que estar configurada en Vercel *antes* de correr `vercel --prod` / `npm run build`. Si la cambiás después, hace falta un nuevo build para que tome efecto.
@@ -95,6 +97,8 @@ vercel --prod
 ```
 
 > Si `BREVO_API_KEY` no está configurada, las reservas se siguen guardando normalmente y solo se saltea el envío de mails (queda un aviso en los logs). Nunca se pierde una reserva por un problema de email.
+
+**Configurar el webhook de MercadoPago:** En el dashboard de MercadoPago (Integraciones → Webhooks), agregá la URL `<SITE_URL>/api/payments/webhook` (donde `<SITE_URL>` es el valor de la variable, por ejemplo `https://move-recovery.vercel.app/api/payments/webhook`). MercadoPago genera un `Webhook signing secret` — ese es el valor que va al `MP_WEBHOOK_SECRET` arriba.
 
 ---
 

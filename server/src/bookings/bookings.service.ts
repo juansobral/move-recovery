@@ -36,7 +36,7 @@ export class BookingsService {
     return this.bookingsRepo.find({ order: { date: 'DESC', time: 'DESC' } });
   }
 
-  async create(dto: CreateBookingDto, userId: string): Promise<CreateBookingResponse> {
+  async create(dto: CreateBookingDto, userId: string, mpPaymentId: string | null = null): Promise<CreateBookingResponse> {
     if (dto.date < todayStr()) throw new BadRequestException('No se puede reservar en una fecha pasada.');
 
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } });
@@ -56,6 +56,7 @@ export class BookingsService {
           service,
           notes: dto.notes || null,
           userId: user.id,
+          mpPaymentId,
         }),
       );
     } catch (e) {
@@ -82,6 +83,16 @@ export class BookingsService {
       notified = await this.mail.enviar(this.mail.mailCancelacion(booking)).catch(() => false);
     }
     return { ok: true, id, notified };
+  }
+
+  findByUserAndSlot(userId: string, date: string, time: string): Promise<Booking | null> {
+    return this.bookingsRepo.findOne({ where: { userId, date, time } });
+  }
+
+  // MercadoPago reintenta los webhooks y manda payment.created/payment.updated
+  // por el mismo pago: esto es lo que hace idempotente al alta de la reserva.
+  findByMpPaymentId(mpPaymentId: string): Promise<Booking | null> {
+    return this.bookingsRepo.findOne({ where: { mpPaymentId } });
   }
 
   private isUniqueViolation(e: unknown): boolean {

@@ -6,6 +6,7 @@ import { GoogleSignInButton } from '../../auth/GoogleSignInButton';
 import { SectionHeading } from '../../landing/SectionHeading';
 import { BookingForm } from '../BookingForm';
 import { DateServiceSelector } from '../DateServiceSelector';
+import { PaymentChoice } from '../PaymentChoice';
 import { SlotGrid } from '../SlotGrid';
 
 export const BookingSection = (): JSX.Element => {
@@ -20,6 +21,10 @@ export const BookingSection = (): JSX.Element => {
     isLoadingSlots,
     servicios,
     submitBooking,
+    subscribeAndBook,
+    hasCredits,
+    hasActivePlan,
+    isSocio,
     isSubmitting,
   } = useBookingFlow();
 
@@ -51,7 +56,16 @@ export const BookingSection = (): JSX.Element => {
           <SlotGrid slots={slots} selectedTime={selectedTime} onSelect={setSelectedTime} isLoading={isLoadingSlots} />
         </div>
 
-        <BookingForm date={date} selectedTime={selectedTime} isSubmitting={isSubmitting} onSubmit={submitBooking} />
+        {hasCredits ? (
+          <BookingForm date={date} selectedTime={selectedTime} isSubmitting={isSubmitting} onSubmit={submitBooking} />
+        ) : (
+          <PaymentChoice
+            isSocio={isSocio}
+            hasActivePlan={hasActivePlan}
+            onPayOneOff={(notes) => submitBooking({ notes })}
+            onSubscribe={subscribeAndBook}
+          />
+        )}
       </div>
     </section>
   );
