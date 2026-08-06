@@ -134,7 +134,7 @@ export class PaymentsController {
       // usuarios de prueba, aún con el evento de Suscripciones tildado —
       // antes de resignarnos a "pending", le preguntamos directo a
       // MercadoPago si ya la autorizó.
-      await this.reconcilePreapproval(ref);
+      await this.reconcilePreapproval(ref, customer.email);
       subscription = await this.subscriptionsService.findCurrent(customer.id);
     }
     if (!subscription) return { status: 'pending' };
@@ -284,9 +284,9 @@ export class PaymentsController {
   // Fallback llamado desde checkoutStatus cuando el webhook de preapproval
   // nunca llegó — consulta MercadoPago directo por la referencia y procesa la
   // suscripción con la misma lógica que usaría el webhook si hubiera llegado.
-  private async reconcilePreapproval(reference: string): Promise<void> {
+  private async reconcilePreapproval(reference: string, payerEmail: string): Promise<void> {
     try {
-      const found = await this.mercadoPago.searchPreapprovalByReference(reference);
+      const found = await this.mercadoPago.searchPreapprovalByReference(payerEmail, reference);
       if (!found) return;
       this.logger.log(`Reconciliación manual: preapproval ${found.id} (ref ${reference}) status=${found.status}`);
       await this.processAuthorizedPreapproval(found.id, found.status, reference);
