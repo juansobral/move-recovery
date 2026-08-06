@@ -3,8 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useLazyGetCheckoutStatusQuery } from '../../features/api/userApi';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-const POLL_INTERVAL_MS = 2000;
-const MAX_ATTEMPTS = 30; // ~1 minuto
+const POLL_INTERVAL_MS = 5000;
+const MAX_ATTEMPTS = 30; // ~2.5 minutos
 
 export const CheckoutPendingPage = (): JSX.Element => {
   useDocumentTitle('Confirmando tu pago · MOVE®');
