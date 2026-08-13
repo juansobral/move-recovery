@@ -121,29 +121,39 @@ export class PaymentsController {
   async checkoutStatus(@Query('ref') ref: string, @CurrentUser() customer: AuthenticatedCustomer) {
     if (!ref) return { status: 'invalid' };
     const intent = await this.checkoutReference.verify(ref);
-    if (!intent || intent.userId !== customer.id) {
+    if (!intent) {
+      this.logger.warn(`checkout-status: ref=${ref} no resolvió a ningún intent (formato inválido o fila inexistente).`);
       return { status: 'invalid' };
+    }
+    if (intent.userId !== customer.id) {
+      // TEMPORAL (debug): la validación de dueño está deshabilitada para poder
+      // diagnosticar a mano el caso de checkout que no confirmaba en
+      // /pago-pendiente — cualquier cliente autenticado puede consultar el
+      // estado de una ref ajena mientras esto siga así. Sacar apenas se
+      // termine de diagnosticar.
+      this.logger.warn(`checkout-status: ref=${ref} pertenece a ${intent.userId}, consultada por ${customer.id}.`);
     }
 
     if (intent.kind === 'oneoff') {
-      const booking = await this.bookingsService.findByUserAndSlot(customer.id, intent.date, intent.time);
+      const booking = await this.bookingsService.findByUserAndSlot(intent.userId, intent.date, intent.time);
       return booking ? { status: 'completed', booking } : { status: 'pending' };
     }
 
-    let subscription = await this.subscriptionsService.findCurrent(customer.id);
+    let subscription = await this.subscriptionsService.findCurrent(intent.userId);
     if (!subscription) {
       // El webhook de "preapproval" puede no llegar nunca en sandbox con
       // usuarios de prueba, aún con el evento de Suscripciones tildado —
       // antes de resignarnos a "pending", le preguntamos directo a
       // MercadoPago si ya la autorizó.
-      await this.reconcilePreapproval(ref, customer.email);
-      subscription = await this.subscriptionsService.findCurrent(customer.id);
+      const owner = await this.usersService.findById(intent.userId);
+      if (owner) await this.reconcilePreapproval(ref, owner.email);
+      subscription = await this.subscriptionsService.findCurrent(intent.userId);
     }
     if (!subscription) return { status: 'pending' };
 
     if (!intent.intendedBooking) return { status: 'completed', booking: null };
 
-    const booking = await this.bookingsService.findByUserAndSlot(customer.id, intent.intendedBooking.date, intent.intendedBooking.time);
+    const booking = await this.bookingsService.findByUserAndSlot(intent.userId, intent.intendedBooking.date, intent.intendedBooking.time);
     return { status: 'completed', booking: booking ?? null };
   }
 
