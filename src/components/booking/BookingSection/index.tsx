@@ -26,6 +26,7 @@ export const BookingSection = (): JSX.Element => {
     hasActivePlan,
     isSocio,
     isSubmitting,
+    pricing,
   } = useBookingFlow();
 
   const isAuthenticated = useAppSelector(selectIsCustomerAuthenticated);
@@ -62,6 +63,7 @@ export const BookingSection = (): JSX.Element => {
           <PaymentChoice
             isSocio={isSocio}
             hasActivePlan={hasActivePlan}
+            pricing={pricing}
             onPayOneOff={(notes) => submitBooking({ notes })}
             onSubscribe={subscribeAndBook}
           />

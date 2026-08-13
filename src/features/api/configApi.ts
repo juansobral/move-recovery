@@ -5,6 +5,7 @@ export const configApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getConfig: builder.query<BookingConfig, void>({
       query: () => ({ url: '/config', method: 'GET' }),
+      providesTags: ['Config'],
     }),
   }),
 });

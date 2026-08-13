@@ -71,6 +71,7 @@ export function useBookingFlow() {
     slots: availability?.slots ?? [],
     isLoadingSlots,
     servicios: config?.servicios ?? [],
+    pricing: config?.pricing,
     submitBooking,
     subscribeAndBook,
     hasCredits,

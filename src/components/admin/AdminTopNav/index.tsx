@@ -29,6 +29,9 @@ export const AdminTopNav = ({ onReload, isReloading }: AdminTopNavProps): JSX.El
         <Button asChild variant="ghost" size="sm">
           <Link to="/admin/usuarios">Usuarios</Link>
         </Button>
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/admin/precios">Precios</Link>
+        </Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => setDiagOpen(true)}>
           Diagnóstico
         </Button>

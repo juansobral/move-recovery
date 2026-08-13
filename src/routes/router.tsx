@@ -44,6 +44,19 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: '/admin/precios',
+    element: <RequireAuth />,
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { AdminPricingPage } = await import('../pages/AdminPricingPage');
+          return { Component: AdminPricingPage };
+        },
+      },
+    ],
+  },
+  {
     path: '/completar-perfil',
     element: <RequireUserAuth />,
     children: [
