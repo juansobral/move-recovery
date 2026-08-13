@@ -15,11 +15,11 @@ export const SERVICIOS = [
 
 export type Servicio = (typeof SERVICIOS)[number];
 
+// Los precios (priceUyu/priceSocioUyu) ya no viven acá — son configurables
+// desde el admin, ver server/src/pricing/ (tabla pricing_settings).
 export const PLANS = {
-  standard: { label: 'Standard Reset', priceUyu: 2400, priceSocioUyu: 1200, sessionsPerMonth: 4 },
-  premium: { label: 'Premium Reset', priceUyu: 3840, priceSocioUyu: 1920, sessionsPerMonth: 8 },
+  standard: { label: 'Standard Reset', sessionsPerMonth: 4 },
+  premium: { label: 'Premium Reset', sessionsPerMonth: 8 },
 } as const;
 
 export type PlanKey = keyof typeof PLANS;
-
-export const RESET_SESSION_PRICE = { priceUyu: 600, priceSocioUyu: 300 } as const;

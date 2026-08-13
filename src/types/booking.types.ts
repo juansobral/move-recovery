@@ -11,9 +11,19 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface PricingConfig {
+  standardPriceUyu: number;
+  standardPriceSocioUyu: number;
+  premiumPriceUyu: number;
+  premiumPriceSocioUyu: number;
+  resetSessionPriceUyu: number;
+  resetSessionPriceSocioUyu: number;
+}
+
 export interface BookingConfig {
   slots: string[];
   servicios: string[];
+  pricing: PricingConfig;
 }
 
 export interface AvailabilitySlot {

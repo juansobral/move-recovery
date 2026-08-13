@@ -14,8 +14,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PLANS, RESET_SESSION_PRICE } from '../catalog/catalog.constants';
+import { PLANS } from '../catalog/catalog.constants';
 import { BookingsService } from '../bookings/bookings.service';
+import { PricingService } from '../pricing/pricing.service';
 import { CurrentUser } from '../users/decorators/current-user.decorator';
 import { UserJwtAuthGuard } from '../users/guards/user-jwt-auth.guard';
 import { AuthenticatedCustomer } from '../users/users.types';
@@ -36,6 +37,7 @@ export class PaymentsController {
     private readonly bookingsService: BookingsService,
     private readonly subscriptionsService: SubscriptionsService,
     private readonly usersService: UsersService,
+    private readonly pricingService: PricingService,
     private readonly checkoutReference: CheckoutReferenceService,
     private readonly mercadoPago: MercadoPagoService,
     private readonly config: ConfigService,
@@ -57,7 +59,7 @@ export class PaymentsController {
     }
 
     const user = await this.usersService.findById(customer.id);
-    const amount = user?.isSocio ? RESET_SESSION_PRICE.priceSocioUyu : RESET_SESSION_PRICE.priceUyu;
+    const amount = await this.pricingService.getResetSessionPrice(user?.isSocio ?? false);
     const siteUrl = this.config.get<string>('SITE_URL') ?? 'http://localhost:5173';
 
     const reference = await this.checkoutReference.sign({
@@ -91,7 +93,7 @@ export class PaymentsController {
 
     const user = await this.usersService.findById(customer.id);
     const plan = PLANS[dto.plan];
-    const amount = user?.isSocio ? plan.priceSocioUyu : plan.priceUyu;
+    const amount = await this.pricingService.getPlanPrice(dto.plan, user?.isSocio ?? false);
     const siteUrl = this.config.get<string>('SITE_URL') ?? 'http://localhost:5173';
 
     const reference = await this.checkoutReference.sign({
