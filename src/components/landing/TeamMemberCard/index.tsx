@@ -3,10 +3,18 @@ interface TeamMemberCardProps {
   photoAlt: string;
   name: string;
   role: string;
-  credentials: string[];
+  bio: string;
+  specialties: string[];
 }
 
-export const TeamMemberCard = ({ photoSrc, photoAlt, name, role, credentials }: TeamMemberCardProps): JSX.Element => (
+export const TeamMemberCard = ({
+  photoSrc,
+  photoAlt,
+  name,
+  role,
+  bio,
+  specialties,
+}: TeamMemberCardProps): JSX.Element => (
   <article className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition hover:-translate-y-1 hover:border-neutral-600">
     <div className="relative aspect-[4/5] overflow-hidden bg-bg-soft">
       <img
@@ -24,10 +32,11 @@ export const TeamMemberCard = ({ photoSrc, photoAlt, name, role, credentials }: 
       <p className="mb-5 mt-2.5 border-b border-border pb-4 text-xs uppercase leading-relaxed tracking-[2px] text-muted-foreground">
         {role}
       </p>
+      <p className="mb-5 text-sm leading-relaxed text-neutral-300">{bio}</p>
       <ul className="grid gap-2.5">
-        {credentials.map((c) => (
-          <li key={c} className="relative pl-[18px] text-sm leading-relaxed text-neutral-300 before:absolute before:left-0 before:top-[9px] before:h-px before:w-[7px] before:bg-muted-foreground">
-            {c}
+        {specialties.map((s) => (
+          <li key={s} className="relative pl-[18px] text-sm leading-relaxed text-neutral-300 before:absolute before:left-0 before:top-[9px] before:h-px before:w-[7px] before:bg-muted-foreground">
+            {s}
           </li>
         ))}
       </ul>
