@@ -28,8 +28,8 @@ const TEAM = [
     specialties: ['Fuerza y potencia', 'Readaptación deportiva', 'Alto rendimiento', 'Planificación individualizada'],
   },
   {
-    photoSrc: '/img/leandro-olenchuk.jpg',
-    photoAlt: 'Leandro Olenchuk, entrenador en MOVE®',
+    photoSrc: '/img/leandro-olenchuk.svg',
+    photoAlt: 'Leandro Olenchuk, entrenador en MOVE® (foto próximamente)',
     name: 'Leandro Olenchuk',
     role: 'Entrenador',
     bio: 'Técnico en Fitness, actualmente cursando el último año de la Licenciatura en Educación Física. Siete años de experiencia en el área de entrenamiento, con formación específica en preparación física para deportes de equipo, y dos años como preparador físico de un equipo de fútbol de la Liga Montevideana. En MOVE está a cargo del acompañamiento en sala: supervisa la técnica, controla las cargas y asegura que cada persona ejecute su plan como fue diseñado, tanto de entrenamiento como de readaptación deportiva.',
