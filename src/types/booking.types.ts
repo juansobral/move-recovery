@@ -18,6 +18,7 @@ export interface PricingConfig {
   premiumPriceSocioUyu: number;
   resetSessionPriceUyu: number;
   resetSessionPriceSocioUyu: number;
+  firstSessionPriceUyu: number;
 }
 
 export interface BookingConfig {

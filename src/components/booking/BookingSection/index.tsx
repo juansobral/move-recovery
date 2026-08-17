@@ -24,6 +24,7 @@ export const BookingSection = (): JSX.Element => {
     subscribeAndBook,
     hasCredits,
     hasActivePlan,
+    isFirstSession,
     isSocio,
     isSubmitting,
     pricing,
@@ -63,6 +64,7 @@ export const BookingSection = (): JSX.Element => {
           <PaymentChoice
             isSocio={isSocio}
             hasActivePlan={hasActivePlan}
+            isFirstSession={isFirstSession}
             pricing={pricing}
             onPayOneOff={(notes) => submitBooking({ notes })}
             onSubscribe={subscribeAndBook}

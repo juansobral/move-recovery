@@ -24,4 +24,8 @@ export class UpdatePricingDto {
   @IsInt({ message: 'El precio debe ser un número entero.' })
   @Min(1, { message: 'El precio debe ser mayor a 0.' })
   resetSessionPriceSocioUyu: number;
+
+  @IsInt({ message: 'El precio debe ser un número entero.' })
+  @Min(1, { message: 'El precio debe ser mayor a 0.' })
+  firstSessionPriceUyu: number;
 }

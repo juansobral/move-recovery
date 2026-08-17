@@ -96,6 +96,15 @@ export const AdminPricingPage = (): JSX.Element => {
             </div>
           </fieldset>
 
+          <fieldset className="space-y-3">
+            <legend className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Primera sesión (cliente nuevo)</legend>
+            <div>
+              <Label htmlFor="firstSessionPriceUyu">Precio</Label>
+              <Input id="firstSessionPriceUyu" type="number" {...register('firstSessionPriceUyu')} />
+              {errors.firstSessionPriceUyu && <p className="mt-1 text-xs text-destructive">{errors.firstSessionPriceUyu.message}</p>}
+            </div>
+          </fieldset>
+
           <Button type="submit" disabled={isSaving || isFetching}>
             {isSaving ? 'Guardando…' : 'Guardar precios'}
           </Button>

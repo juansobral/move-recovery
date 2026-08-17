@@ -23,6 +23,9 @@ export class PricingSettings {
   @Column({ name: 'reset_session_price_socio_uyu', type: 'int' })
   resetSessionPriceSocioUyu: number;
 
+  @Column({ name: 'first_session_price_uyu', type: 'int' })
+  firstSessionPriceUyu: number;
+
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 }

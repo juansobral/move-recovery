@@ -59,7 +59,8 @@ export class PaymentsController {
     }
 
     const user = await this.usersService.findById(customer.id);
-    const amount = await this.pricingService.getResetSessionPrice(user?.isSocio ?? false);
+    const isFirstSession = !(await this.bookingsService.hasPaidOneOffBooking(customer.id));
+    const amount = await this.pricingService.getResetSessionPrice(user?.isSocio ?? false, isFirstSession);
     const siteUrl = this.config.get<string>('SITE_URL') ?? 'http://localhost:5173';
 
     const reference = await this.checkoutReference.sign({

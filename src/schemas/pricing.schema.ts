@@ -9,6 +9,7 @@ export const pricingSchema = z.object({
   premiumPriceSocioUyu: price,
   resetSessionPriceUyu: price,
   resetSessionPriceSocioUyu: price,
+  firstSessionPriceUyu: price,
 });
 
 export type PricingFormValues = z.infer<typeof pricingSchema>;

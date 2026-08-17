@@ -5,6 +5,7 @@ export interface UserProfile {
   phone: string | null;
   avatarUrl: string | null;
   isSocio: boolean;
+  hasPaidOneOffBooking: boolean;
 }
 
 export interface GoogleLoginResponse {
