@@ -14,8 +14,8 @@ export const SiteNav = (): JSX.Element => {
       id="top"
       className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-black/[0.82] px-8 py-[18px] backdrop-blur-[10px] max-md:px-5 max-md:py-3.5"
     >
-      <Link to="/" className="font-heading text-2xl font-black tracking-[2px]">
-        MOVE<span className="align-super text-xs font-semibold">®</span>
+      <Link to="/" aria-label="MOVE">
+        <img src="/img/logo-move.png" alt="MOVE" width={220} height={101} className="h-6 w-auto md:h-7" />
       </Link>
       <nav className="hidden gap-7 md:flex">
         {NAV_LINKS.map((link) => (
