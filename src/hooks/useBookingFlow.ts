@@ -31,6 +31,7 @@ export function useBookingFlow() {
   // Plan vigente pero sin créditos: se puede pagar la sesión suelta, pero NO
   // ofrecer suscribirse de nuevo (el back lo rechaza con 409).
   const hasActivePlan = Boolean(subscription && subscription.currentPeriodEnd >= todayStr() && subscription.status === 'authorized');
+  const isFirstSession = Boolean(me && !me.hasPaidOneOffBooking);
 
   // Igual que app.js original: cambiar de fecha limpia el horario elegido.
   useEffect(() => {
@@ -76,6 +77,7 @@ export function useBookingFlow() {
     subscribeAndBook,
     hasCredits,
     hasActivePlan,
+    isFirstSession,
     isSocio: me?.isSocio ?? false,
     isSubmitting,
   };

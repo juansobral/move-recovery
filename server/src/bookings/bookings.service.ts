@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { IsNull, Not, QueryFailedError, Repository } from 'typeorm';
 import { todayStr } from '../common/date.util';
 import { SERVICIOS, SLOTS } from '../catalog/catalog.constants';
 import { MailService } from '../mail/mail.service';
@@ -93,6 +93,14 @@ export class BookingsService {
   // por el mismo pago: esto es lo que hace idempotente al alta de la reserva.
   findByMpPaymentId(mpPaymentId: string): Promise<Booking | null> {
     return this.bookingsRepo.findOne({ where: { mpPaymentId } });
+  }
+
+  // Determina el precio de "primera sesión": un usuario que nunca pagó una
+  // sesión suelta (reservas cubiertas por crédito de plan no cuentan, tienen
+  // mpPaymentId null).
+  async hasPaidOneOffBooking(userId: string): Promise<boolean> {
+    const count = await this.bookingsRepo.count({ where: { userId, mpPaymentId: Not(IsNull()) } });
+    return count > 0;
   }
 
   private isUniqueViolation(e: unknown): boolean {

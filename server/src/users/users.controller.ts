@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Booking } from '../bookings/entities/booking.entity';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { CompleteProfileDto } from './dto/complete-profile.dto';
@@ -29,14 +29,37 @@ export class UsersController {
   @UseGuards(UserJwtAuthGuard)
   async me(@CurrentUser() customer: AuthenticatedCustomer) {
     const user = await this.usersService.findById(customer.id);
-    return { id: user!.id, email: user!.email, name: user!.name, phone: user!.phone, avatarUrl: user!.avatarUrl, isSocio: user!.isSocio };
+    const hasPaidOneOffBooking = await this.hasPaidOneOffBooking(customer.id);
+    return {
+      id: user!.id,
+      email: user!.email,
+      name: user!.name,
+      phone: user!.phone,
+      avatarUrl: user!.avatarUrl,
+      isSocio: user!.isSocio,
+      hasPaidOneOffBooking,
+    };
   }
 
   @Patch('me')
   @UseGuards(UserJwtAuthGuard)
   async completeProfile(@CurrentUser() customer: AuthenticatedCustomer, @Body() dto: CompleteProfileDto) {
     const user = await this.usersService.completePhone(customer.id, dto.phone);
-    return { id: user.id, email: user.email, name: user.name, phone: user.phone, avatarUrl: user.avatarUrl, isSocio: user.isSocio };
+    const hasPaidOneOffBooking = await this.hasPaidOneOffBooking(customer.id);
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      avatarUrl: user.avatarUrl,
+      isSocio: user.isSocio,
+      hasPaidOneOffBooking,
+    };
+  }
+
+  private async hasPaidOneOffBooking(userId: string): Promise<boolean> {
+    const count = await this.bookingsRepo.count({ where: { userId, mpPaymentId: Not(IsNull()) } });
+    return count > 0;
   }
 
   @Get('me/bookings')

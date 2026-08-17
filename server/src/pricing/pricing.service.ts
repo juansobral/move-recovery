@@ -29,8 +29,9 @@ export class PricingService {
     return isSocio ? pricing.premiumPriceSocioUyu : pricing.premiumPriceUyu;
   }
 
-  async getResetSessionPrice(isSocio: boolean): Promise<number> {
+  async getResetSessionPrice(isSocio: boolean, isFirstSession = false): Promise<number> {
     const pricing = await this.getCurrent();
+    if (isFirstSession) return pricing.firstSessionPriceUyu;
     return isSocio ? pricing.resetSessionPriceSocioUyu : pricing.resetSessionPriceUyu;
   }
 }

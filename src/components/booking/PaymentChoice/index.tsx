@@ -7,13 +7,18 @@ import { Textarea } from '../../ui/textarea';
 interface PaymentChoiceProps {
   isSocio: boolean;
   hasActivePlan: boolean;
+  isFirstSession: boolean;
   pricing: PricingConfig | undefined;
   onPayOneOff: (notes: string) => Promise<unknown>;
   onSubscribe: (plan: 'standard' | 'premium', notes: string) => Promise<void>;
 }
 
-export const PaymentChoice = ({ isSocio, hasActivePlan, pricing, onPayOneOff, onSubscribe }: PaymentChoiceProps): JSX.Element => {
-  const resetSessionPrice = isSocio ? pricing?.resetSessionPriceSocioUyu : pricing?.resetSessionPriceUyu;
+export const PaymentChoice = ({ isSocio, hasActivePlan, isFirstSession, pricing, onPayOneOff, onSubscribe }: PaymentChoiceProps): JSX.Element => {
+  const resetSessionPrice = isFirstSession
+    ? pricing?.firstSessionPriceUyu
+    : isSocio
+      ? pricing?.resetSessionPriceSocioUyu
+      : pricing?.resetSessionPriceUyu;
   const standardPrice = isSocio ? pricing?.standardPriceSocioUyu : pricing?.standardPriceUyu;
   const premiumPrice = isSocio ? pricing?.premiumPriceSocioUyu : pricing?.premiumPriceUyu;
   const [isLoading, setIsLoading] = useState<'oneoff' | 'standard' | 'premium' | null>(null);

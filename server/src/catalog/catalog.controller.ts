@@ -12,6 +12,7 @@ interface ConfigResponse {
     premiumPriceSocioUyu: number;
     resetSessionPriceUyu: number;
     resetSessionPriceSocioUyu: number;
+    firstSessionPriceUyu: number;
   };
 }
 
@@ -32,6 +33,7 @@ export class CatalogController {
         premiumPriceSocioUyu: pricing.premiumPriceSocioUyu,
         resetSessionPriceUyu: pricing.resetSessionPriceUyu,
         resetSessionPriceSocioUyu: pricing.resetSessionPriceSocioUyu,
+        firstSessionPriceUyu: pricing.firstSessionPriceUyu,
       },
     };
   }
