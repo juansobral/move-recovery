@@ -65,19 +65,37 @@ export const PaymentChoice = ({ isSocio, hasActivePlan, isFirstSession, pricing,
             type="button"
             variant="ghost"
             size="block"
+            className="whitespace-normal leading-snug"
             disabled={isLoading !== null || !pricing}
             onClick={() => run('standard', () => onSubscribe('standard', notes))}
           >
-            {isLoading === 'standard' ? 'Redirigiendo…' : `Suscribirme a Standard Reset ($${standardPrice ?? '…'}/mes · 4 sesiones)`}
+            {isLoading === 'standard' ? (
+              'Redirigiendo…'
+            ) : (
+              <>
+                Suscribirme a Standard Reset
+                <br />
+                {`($${standardPrice ?? '…'}/mes · 4 sesiones)`}
+              </>
+            )}
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="block"
+            className="whitespace-normal leading-snug"
             disabled={isLoading !== null || !pricing}
             onClick={() => run('premium', () => onSubscribe('premium', notes))}
           >
-            {isLoading === 'premium' ? 'Redirigiendo…' : `Suscribirme a Premium Reset ($${premiumPrice ?? '…'}/mes · 8 sesiones)`}
+            {isLoading === 'premium' ? (
+              'Redirigiendo…'
+            ) : (
+              <>
+                Suscribirme a Premium Reset
+                <br />
+                {`($${premiumPrice ?? '…'}/mes · 8 sesiones)`}
+              </>
+            )}
           </Button>
         </>
       )}
