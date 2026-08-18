@@ -3,7 +3,7 @@ import { SectionHeading } from '../SectionHeading';
 
 const MAPS_PLACE_URL =
   'https://www.google.com/maps/place/MOVE+Strength%26Conditioning/@-34.8773036,-56.0787995,17z/data=!4m6!3m5!1s0x959f8730c171b183:0x6e7a19d4869b4b26!8m2!3d-34.8773036!4d-56.0787995!16s%2Fg%2F11g22zyvcy';
-const MAPS_EMBED_URL = 'https://maps.google.com/maps?q=MOVE%20Strength%26Conditioning%2C-34.8773036%2C-56.0787995&hl=es&z=16&output=embed';
+const MAPS_EMBED_URL = 'https://maps.google.com/maps?q=-34.8773036,-56.0787995&hl=es&z=17&output=embed';
 
 export const LocationSection = (): JSX.Element => (
   <section id="ubicacion" className="mx-auto max-w-site border-b border-border px-8 py-24 max-md:px-5 max-md:py-16">
