@@ -12,11 +12,8 @@ export const LocationSection = (): JSX.Element => (
       <div className="flex flex-col gap-6 rounded-lg border border-border bg-card p-[30px]">
         <div>
           <span className="mb-2 block text-[11px] uppercase tracking-[2.5px] text-muted-foreground">Dirección</span>
-          {/* TODO: reemplazar por la dirección exacta (calle y número) */}
           <p className="text-base leading-relaxed text-neutral-200">
-            MOVE® Strength &amp; Conditioning
-            <br />
-            Montevideo, Uruguay
+            Máximo Tajes 6397 esquina Beranger
           </p>
         </div>
         <div>
@@ -37,6 +34,15 @@ export const LocationSection = (): JSX.Element => (
               className="border-b border-neutral-700 hover:border-foreground"
             >
               @move_strengthconditioning
+            </a>
+            <br />
+            <a
+              href="https://wa.me/59899140299"
+              target="_blank"
+              rel="noopener"
+              className="border-b border-neutral-700 hover:border-foreground"
+            >
+              +598 99 140 299
             </a>
           </p>
         </div>
