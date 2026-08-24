@@ -21,6 +21,7 @@ import { CurrentUser } from '../users/decorators/current-user.decorator';
 import { UserJwtAuthGuard } from '../users/guards/user-jwt-auth.guard';
 import { AuthenticatedCustomer } from '../users/users.types';
 import { UsersService } from '../users/users.service';
+import { DiscountCodesService } from '../discount-codes/discount-codes.service';
 import { CheckoutReferenceService } from './checkout-reference.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { CreateSubscriptionCheckoutDto } from './dto/create-subscription-checkout.dto';
@@ -38,6 +39,7 @@ export class PaymentsController {
     private readonly subscriptionsService: SubscriptionsService,
     private readonly usersService: UsersService,
     private readonly pricingService: PricingService,
+    private readonly discountCodesService: DiscountCodesService,
     private readonly checkoutReference: CheckoutReferenceService,
     private readonly mercadoPago: MercadoPagoService,
     private readonly config: ConfigService,
@@ -54,6 +56,21 @@ export class PaymentsController {
         // Si la reserva falla (bloque tomado, perfil incompleto) el crédito ya
         // estaba descontado — lo devolvemos para no cobrarle una sesión que no fue.
         await this.subscriptionsService.restoreCredit(customer.id);
+        throw e;
+      }
+    }
+
+    if (dto.discountCode) {
+      const validCode = await this.discountCodesService.isCodeValid(dto.discountCode);
+      if (!validCode) throw new BadRequestException('Código de descuento inválido.');
+      const redeemed = await this.usersService.tryRedeemFreeSession(customer.id);
+      if (!redeemed) throw new ConflictException('Ya usaste tu sesión gratis con código de descuento.');
+      try {
+        return await this.bookingsService.create(dto, customer.id);
+      } catch (e) {
+        // Igual que restoreCredit: si la reserva falla, la sesión gratis
+        // queda disponible para reintentar con otro horario.
+        await this.usersService.restoreFreeSession(customer.id);
         throw e;
       }
     }

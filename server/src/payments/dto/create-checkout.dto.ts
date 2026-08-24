@@ -16,4 +16,8 @@ export class CreateCheckoutDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  discountCode?: string;
 }
