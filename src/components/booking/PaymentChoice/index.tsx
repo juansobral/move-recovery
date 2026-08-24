@@ -80,6 +80,12 @@ export const PaymentChoice = ({
           : 'Elegí cómo querés pagar esta sesión.'}
       </p>
 
+      {isSocio ? (
+        <p className="mb-3 text-xs text-success">Precio socio aplicado (50% OFF).</p>
+      ) : (
+        <p className="mb-3 text-xs text-muted-foreground">Los socios de MOVE ahorran 50% en sesiones y planes.</p>
+      )}
+
       <Textarea
         rows={2}
         placeholder="Notas (opcional)"

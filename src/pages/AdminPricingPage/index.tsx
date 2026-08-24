@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { AdminTopNav } from '../../components/admin/AdminTopNav';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -8,6 +8,7 @@ import { Label } from '../../components/ui/label';
 import { useGetAdminPricingQuery, useUpdatePricingMutation } from '../../features/api/pricingApi';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { extractApiErrorMessage } from '../../lib/apiError';
+import { cn } from '../../lib/cn';
 import { pricingSchema, type PricingFormValues } from '../../schemas/pricing.schema';
 
 export const AdminPricingPage = (): JSX.Element => {
@@ -21,6 +22,7 @@ export const AdminPricingPage = (): JSX.Element => {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<PricingFormValues>({ resolver: zodResolver(pricingSchema) });
 
@@ -39,6 +41,26 @@ export const AdminPricingPage = (): JSX.Element => {
     }
   });
 
+  const discountPercent = (regular: unknown, socio: unknown): number | null => {
+    const r = Number(regular);
+    const s = Number(socio);
+    if (!r || !s) return null;
+    return Math.round((1 - s / r) * 100);
+  };
+
+  const standardRegular = useWatch({ control, name: 'standardPriceUyu' });
+  const standardSocio = useWatch({ control, name: 'standardPriceSocioUyu' });
+  const premiumRegular = useWatch({ control, name: 'premiumPriceUyu' });
+  const premiumSocio = useWatch({ control, name: 'premiumPriceSocioUyu' });
+  const resetRegular = useWatch({ control, name: 'resetSessionPriceUyu' });
+  const resetSocio = useWatch({ control, name: 'resetSessionPriceSocioUyu' });
+
+  const renderDiscountHint = (regular: unknown, socio: unknown): JSX.Element | null => {
+    const pct = discountPercent(regular, socio);
+    if (pct === null) return null;
+    return <span className={cn('ml-2 text-xs', pct >= 45 && pct <= 55 ? 'text-success' : 'text-destructive')}>−{pct}%</span>;
+  };
+
   return (
     <div>
       <AdminTopNav onReload={refetch} isReloading={isFetching} />
@@ -55,7 +77,10 @@ export const AdminPricingPage = (): JSX.Element => {
                 {errors.standardPriceUyu && <p className="mt-1 text-xs text-destructive">{errors.standardPriceUyu.message}</p>}
               </div>
               <div>
-                <Label htmlFor="standardPriceSocioUyu">Precio socio</Label>
+                <Label htmlFor="standardPriceSocioUyu">
+                  Precio socio
+                  {renderDiscountHint(standardRegular, standardSocio)}
+                </Label>
                 <Input id="standardPriceSocioUyu" type="number" {...register('standardPriceSocioUyu')} />
                 {errors.standardPriceSocioUyu && <p className="mt-1 text-xs text-destructive">{errors.standardPriceSocioUyu.message}</p>}
               </div>
@@ -71,7 +96,10 @@ export const AdminPricingPage = (): JSX.Element => {
                 {errors.premiumPriceUyu && <p className="mt-1 text-xs text-destructive">{errors.premiumPriceUyu.message}</p>}
               </div>
               <div>
-                <Label htmlFor="premiumPriceSocioUyu">Precio socio</Label>
+                <Label htmlFor="premiumPriceSocioUyu">
+                  Precio socio
+                  {renderDiscountHint(premiumRegular, premiumSocio)}
+                </Label>
                 <Input id="premiumPriceSocioUyu" type="number" {...register('premiumPriceSocioUyu')} />
                 {errors.premiumPriceSocioUyu && <p className="mt-1 text-xs text-destructive">{errors.premiumPriceSocioUyu.message}</p>}
               </div>
@@ -87,7 +115,10 @@ export const AdminPricingPage = (): JSX.Element => {
                 {errors.resetSessionPriceUyu && <p className="mt-1 text-xs text-destructive">{errors.resetSessionPriceUyu.message}</p>}
               </div>
               <div>
-                <Label htmlFor="resetSessionPriceSocioUyu">Precio socio</Label>
+                <Label htmlFor="resetSessionPriceSocioUyu">
+                  Precio socio
+                  {renderDiscountHint(resetRegular, resetSocio)}
+                </Label>
                 <Input id="resetSessionPriceSocioUyu" type="number" {...register('resetSessionPriceSocioUyu')} />
                 {errors.resetSessionPriceSocioUyu && (
                   <p className="mt-1 text-xs text-destructive">{errors.resetSessionPriceSocioUyu.message}</p>
