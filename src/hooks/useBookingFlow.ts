@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useGetAvailabilityQuery } from '../features/api/availabilityApi';
 import { useGetConfigQuery } from '../features/api/configApi';
 import {
@@ -17,6 +18,8 @@ export function useBookingFlow() {
   const [date, setDate] = useState(todayStr());
   const [service, setService] = useState('');
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const initialDiscountCode = searchParams.get('promo');
 
   const isAuthenticated = useAppSelector(selectIsCustomerAuthenticated);
 
@@ -79,6 +82,7 @@ export function useBookingFlow() {
     hasActivePlan,
     isFirstSession,
     isSocio: me?.isSocio ?? false,
+    initialDiscountCode,
     isSubmitting,
   };
 }

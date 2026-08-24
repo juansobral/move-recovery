@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { extractApiErrorMessage } from '../../../lib/apiError';
-import type { PricingConfig } from '../../../types/booking.types';
+import type { CreateBookingResponse, PricingConfig } from '../../../types/booking.types';
 import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
 
 interface PaymentChoiceProps {
@@ -9,11 +11,22 @@ interface PaymentChoiceProps {
   hasActivePlan: boolean;
   isFirstSession: boolean;
   pricing: PricingConfig | undefined;
+  initialDiscountCode?: string | null;
   onPayOneOff: (notes: string) => Promise<unknown>;
+  onRedeemFreeSession: (code: string, notes: string) => Promise<CreateBookingResponse>;
   onSubscribe: (plan: 'standard' | 'premium', notes: string) => Promise<void>;
 }
 
-export const PaymentChoice = ({ isSocio, hasActivePlan, isFirstSession, pricing, onPayOneOff, onSubscribe }: PaymentChoiceProps): JSX.Element => {
+export const PaymentChoice = ({
+  isSocio,
+  hasActivePlan,
+  isFirstSession,
+  pricing,
+  initialDiscountCode,
+  onPayOneOff,
+  onRedeemFreeSession,
+  onSubscribe,
+}: PaymentChoiceProps): JSX.Element => {
   const resetSessionPrice = isFirstSession
     ? pricing?.firstSessionPriceUyu
     : isSocio
@@ -21,9 +34,29 @@ export const PaymentChoice = ({ isSocio, hasActivePlan, isFirstSession, pricing,
       : pricing?.resetSessionPriceUyu;
   const standardPrice = isSocio ? pricing?.standardPriceSocioUyu : pricing?.standardPriceUyu;
   const premiumPrice = isSocio ? pricing?.premiumPriceSocioUyu : pricing?.premiumPriceUyu;
-  const [isLoading, setIsLoading] = useState<'oneoff' | 'standard' | 'premium' | null>(null);
+  const [isLoading, setIsLoading] = useState<'oneoff' | 'standard' | 'premium' | 'discount' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
+  const [discountCode, setDiscountCode] = useState(initialDiscountCode ?? '');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleRedeemCode = async () => {
+    setIsLoading('discount');
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      const result = await onRedeemFreeSession(discountCode, notes);
+      setSuccessMessage(
+        result.emailSent
+          ? `✓ Reserva confirmada: ${result.date} a las ${result.time}. Te enviamos un mail con el protocolo y qué llevar. ¡Te esperamos!`
+          : `✓ Reserva confirmada: ${result.date} a las ${result.time}. ¡Te esperamos! (No pudimos enviarte el mail con el protocolo; te escribimos por WhatsApp.)`,
+      );
+    } catch (err) {
+      setError(extractApiErrorMessage(err));
+    } finally {
+      setIsLoading(null);
+    }
+  };
 
   const run = async (key: 'oneoff' | 'standard' | 'premium', action: () => Promise<unknown>) => {
     setIsLoading(key);
@@ -54,6 +87,23 @@ export const PaymentChoice = ({ isSocio, hasActivePlan, isFirstSession, pricing,
         onChange={(e) => setNotes(e.target.value)}
         className="mb-3"
       />
+
+      {initialDiscountCode && (
+        <div className="mb-3">
+          <Label htmlFor="discount-code">Código de descuento</Label>
+          <Input id="discount-code" value={discountCode} onChange={(e) => setDiscountCode(e.target.value)} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="block"
+            className="mt-2"
+            disabled={isLoading !== null || !pricing || !discountCode}
+            onClick={handleRedeemCode}
+          >
+            {isLoading === 'discount' ? 'Canjeando…' : 'Usar código (sesión gratis)'}
+          </Button>
+        </div>
+      )}
 
       <Button type="button" size="block" disabled={isLoading !== null || !pricing} onClick={() => run('oneoff', () => onPayOneOff(notes))}>
         {isLoading === 'oneoff' ? 'Redirigiendo…' : `Pagar $${resetSessionPrice ?? '…'} (esta sesión)`}
@@ -101,6 +151,7 @@ export const PaymentChoice = ({ isSocio, hasActivePlan, isFirstSession, pricing,
       )}
 
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {successMessage && <p className="mt-2 text-sm text-success">{successMessage}</p>}
     </div>
   );
 };
