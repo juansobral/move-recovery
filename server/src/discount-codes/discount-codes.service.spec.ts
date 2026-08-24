@@ -25,4 +25,11 @@ describe('DiscountCodesService.isCodeValid', () => {
     const { service } = makeService(null);
     await expect(service.isCodeValid('PROMO')).rejects.toThrow('No hay código de descuento configurado.');
   });
+
+  it('returns false when the active code is empty/whitespace even though active=true', async () => {
+    const { service } = makeService({ code: '   ', active: true });
+    await expect(service.isCodeValid(' ')).resolves.toBe(false);
+    await expect(service.isCodeValid('')).resolves.toBe(false);
+    await expect(service.isCodeValid('anything')).resolves.toBe(false);
+  });
 });

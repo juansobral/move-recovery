@@ -23,7 +23,8 @@ export class DiscountCodesService {
 
   async isCodeValid(submitted: string): Promise<boolean> {
     const current = await this.getCurrent();
-    if (!current.active) return false;
-    return submitted.trim().toLowerCase() === current.code.trim().toLowerCase();
+    const stored = current.code.trim();
+    if (!current.active || !stored) return false;
+    return submitted.trim().toLowerCase() === stored.toLowerCase();
   }
 }
