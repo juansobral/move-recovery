@@ -8,6 +8,7 @@ export const SERVICIOS = [
 
 export const clientFieldsSchema = z.object({
   notes: z.string().optional(),
+  discountCode: z.string().optional(),
 });
 
 export type ClientFieldsValues = z.infer<typeof clientFieldsSchema>;

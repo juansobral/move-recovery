@@ -21,6 +21,11 @@ export interface PricingConfig {
   firstSessionPriceUyu: number;
 }
 
+export interface DiscountCodeSettings {
+  code: string;
+  active: boolean;
+}
+
 export interface BookingConfig {
   slots: string[];
   servicios: string[];
@@ -42,6 +47,7 @@ export interface CreateBookingRequest {
   time: string;
   service: string;
   notes?: string;
+  discountCode?: string;
 }
 
 export interface CreateBookingResponse {
