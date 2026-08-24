@@ -69,3 +69,30 @@ describe('UsersService.loginWithGoogle', () => {
     expect(result.profileComplete).toBe(true);
   });
 });
+
+describe('UsersService.tryRedeemFreeSession / restoreFreeSession', () => {
+  const makeQueryBuilderRepo = (affected: number) => {
+    const execute = jest.fn().mockResolvedValue({ affected });
+    const qb = { update: jest.fn().mockReturnThis(), set: jest.fn().mockReturnThis(), where: jest.fn().mockReturnThis(), execute };
+    const repo = { createQueryBuilder: jest.fn(() => qb) };
+    return { service: new UsersService(repo as never, {} as never, {} as never), qb };
+  };
+
+  it('tryRedeemFreeSession returns true and flips the flag on first redemption', async () => {
+    const { service, qb } = makeQueryBuilderRepo(1);
+    await expect(service.tryRedeemFreeSession('u-1')).resolves.toBe(true);
+    expect(qb.where).toHaveBeenCalledWith('id = :id AND free_session_redeemed_at IS NULL', { id: 'u-1' });
+  });
+
+  it('tryRedeemFreeSession returns false when the user already redeemed', async () => {
+    const { service } = makeQueryBuilderRepo(0);
+    await expect(service.tryRedeemFreeSession('u-1')).resolves.toBe(false);
+  });
+
+  it('restoreFreeSession clears the flag back to null', async () => {
+    const { service, qb } = makeQueryBuilderRepo(1);
+    await service.restoreFreeSession('u-1');
+    expect(qb.set).toHaveBeenCalledWith({ freeSessionRedeemedAt: null });
+    expect(qb.where).toHaveBeenCalledWith('id = :id', { id: 'u-1' });
+  });
+});

@@ -7,6 +7,8 @@ import { Booking } from './bookings/entities/booking.entity';
 import { BookingsModule } from './bookings/bookings.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { DiagModule } from './diag/diag.module';
+import { DiscountCodeSettings } from './discount-codes/entities/discount-code-settings.entity';
+import { DiscountCodesModule } from './discount-codes/discount-codes.module';
 import { CheckoutIntent } from './payments/entities/checkout-intent.entity';
 import { PaymentsModule } from './payments/payments.module';
 import { PricingSettings } from './pricing/entities/pricing-settings.entity';
@@ -27,7 +29,7 @@ import { UsersModule } from './users/users.module';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         url: config.get<string>('DATABASE_URL'),
-        entities: [AdminUser, Booking, User, Subscription, CheckoutIntent, PricingSettings],
+        entities: [AdminUser, Booking, User, Subscription, CheckoutIntent, PricingSettings, DiscountCodeSettings],
         migrations: [__dirname + '/migrations/*.js'],
         migrationsRun: false,
         synchronize: false,
@@ -44,6 +46,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     SubscriptionsModule,
     PricingModule,
+    DiscountCodesModule,
     PaymentsModule,
   ],
 })

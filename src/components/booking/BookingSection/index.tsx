@@ -26,6 +26,7 @@ export const BookingSection = (): JSX.Element => {
     hasActivePlan,
     isFirstSession,
     isSocio,
+    initialDiscountCode,
     isSubmitting,
     pricing,
   } = useBookingFlow();
@@ -66,7 +67,9 @@ export const BookingSection = (): JSX.Element => {
             hasActivePlan={hasActivePlan}
             isFirstSession={isFirstSession}
             pricing={pricing}
+            initialDiscountCode={initialDiscountCode}
             onPayOneOff={(notes) => submitBooking({ notes })}
+            onRedeemFreeSession={(code, notes) => submitBooking({ notes, discountCode: code })}
             onSubscribe={subscribeAndBook}
           />
         )}
