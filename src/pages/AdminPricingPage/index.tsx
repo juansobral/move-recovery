@@ -38,6 +38,10 @@ export const AdminPricingPage = (): JSX.Element => {
     e.preventDefault();
     setCodeError(null);
     setCodeSaved(false);
+    if (codeActive && !codeValue.trim()) {
+      setCodeError('El código no puede estar vacío si está activo.');
+      return;
+    }
     try {
       await updateDiscountCode({ code: codeValue, active: codeActive }).unwrap();
       setCodeSaved(true);
@@ -85,7 +89,7 @@ export const AdminPricingPage = (): JSX.Element => {
 
   const renderDiscountHint = (regular: unknown, socio: unknown): JSX.Element | null => {
     const pct = discountPercent(regular, socio);
-    if (pct === null) return null;
+    if (pct === null || pct < 0) return null;
     return <span className={cn('ml-2 text-xs', pct >= 45 && pct <= 55 ? 'text-success' : 'text-destructive')}>−{pct}%</span>;
   };
 

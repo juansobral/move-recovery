@@ -61,6 +61,7 @@ export const PaymentChoice = ({
   const run = async (key: 'oneoff' | 'standard' | 'premium', action: () => Promise<unknown>) => {
     setIsLoading(key);
     setError(null);
+    setSuccessMessage(null);
     try {
       await action();
     } catch (err) {
@@ -80,11 +81,12 @@ export const PaymentChoice = ({
           : 'Elegí cómo querés pagar esta sesión.'}
       </p>
 
-      {isSocio ? (
-        <p className="mb-3 text-xs text-success">Precio socio aplicado (50% OFF).</p>
-      ) : (
-        <p className="mb-3 text-xs text-muted-foreground">Los socios de MOVE ahorran 50% en sesiones y planes.</p>
-      )}
+      {!isFirstSession &&
+        (isSocio ? (
+          <p className="mb-3 text-xs text-success">Precio socio aplicado (50% OFF).</p>
+        ) : (
+          <p className="mb-3 text-xs text-muted-foreground">Los socios de MOVE ahorran 50% en sesiones y planes.</p>
+        ))}
 
       <Textarea
         rows={2}
@@ -103,7 +105,7 @@ export const PaymentChoice = ({
             variant="ghost"
             size="block"
             className="mt-2"
-            disabled={isLoading !== null || !pricing || !discountCode}
+            disabled={isLoading !== null || !discountCode}
             onClick={handleRedeemCode}
           >
             {isLoading === 'discount' ? 'Canjeando…' : 'Usar código (sesión gratis)'}
