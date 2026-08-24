@@ -107,4 +107,29 @@ export class UsersService {
     user.isSocio = isSocio;
     return this.usersRepo.save(user);
   }
+
+  // UPDATE condicional atómico — mismo patrón que
+  // SubscriptionsService.tryConsumeCredit: el "¿ya lo usó?" y el marcado
+  // pasan en la misma sentencia, así dos reservas simultáneas del mismo
+  // usuario no pueden consumir la sesión gratis dos veces.
+  async tryRedeemFreeSession(userId: string): Promise<boolean> {
+    const result = await this.usersRepo
+      .createQueryBuilder()
+      .update(User)
+      .set({ freeSessionRedeemedAt: () => 'now()' })
+      .where('id = :id AND free_session_redeemed_at IS NULL', { id: userId })
+      .execute();
+    return (result.affected ?? 0) > 0;
+  }
+
+  // Compensación de tryRedeemFreeSession: si la reserva que iba a usar la
+  // sesión gratis falla, la devolvemos.
+  async restoreFreeSession(userId: string): Promise<void> {
+    await this.usersRepo
+      .createQueryBuilder()
+      .update(User)
+      .set({ freeSessionRedeemedAt: null })
+      .where('id = :id', { id: userId })
+      .execute();
+  }
 }

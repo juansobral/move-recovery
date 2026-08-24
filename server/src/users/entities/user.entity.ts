@@ -25,6 +25,9 @@ export class User {
   @Column({ name: 'is_socio', default: false })
   isSocio: boolean;
 
+  @Column({ name: 'free_session_redeemed_at', type: 'timestamptz', nullable: true })
+  freeSessionRedeemedAt: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 }
