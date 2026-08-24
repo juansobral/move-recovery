@@ -50,7 +50,7 @@ export const BookingSection = (): JSX.Element => {
   return (
     <section id="reservar" className="mx-auto max-w-site border-b border-border px-8 py-24 max-md:px-5 max-md:py-16">
       <SectionHeading tag="05 — Reservá tu hora">Recovery Room · Turnos</SectionHeading>
-      <p className="max-w-[720px] text-lg text-neutral-300">Bloques de 1 hora. Mañanas de 7:00 a 11:00 y tardes de 15:00 a 20:00.</p>
+      <p className="max-w-[720px] text-lg text-neutral-300">Bloques de 1 hora. Mañanas de 9:00 a 12:00 y tardes de 18:00 a 21:00.</p>
 
       <div className="mt-11 grid gap-6 max-md:grid-cols-1 md:grid-cols-[1.1fr_1fr]">
         <div className="rounded-lg border border-border bg-card p-7">
